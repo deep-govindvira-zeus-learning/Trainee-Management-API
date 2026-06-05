@@ -67,9 +67,10 @@ public class TraineeService : ITraineeService
                 trainee.TechStack = updateTrainee.TechStack;
                 trainee.Email = updateTrainee.Email;
                 trainee.UpdatedDate = DateTime.UtcNow;
+
+                return TraineeConverter.ToTraineeResponse(trainee);
             }
 
-            return TraineeConverter.ToTraineeResponse(trainee);
         }
 
         return null;
