@@ -22,7 +22,7 @@ public class TraineeService : ITraineeService
     public TraineeResponse? GetTraineeResponseById(string traineeId)
     {
         foreach(var trainee in trainees)
-            if (trainee.Id == traineeId)
+            if (trainee.Id.Equals(traineeId))
                 return TraineeConverter.ToTraineeResponse(trainee);
 
         return null;
@@ -31,7 +31,7 @@ public class TraineeService : ITraineeService
 
     public Trainee? GetTraineeById(string traineeId)
     {
-        foreach(var trainee in trainees) if (trainee.Id == traineeId) return trainee;
+        foreach(var trainee in trainees) if (trainee.Id.Equals(traineeId)) return trainee;
 
         return null;
         // return _context.Trainees.Find(traineeId);
