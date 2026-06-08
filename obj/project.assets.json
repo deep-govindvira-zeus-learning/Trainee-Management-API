@@ -700,7 +700,6 @@
         "net10.0"
       ],
       "sources": {
-        "https://zeuslearning-824100177805.d.codeartifact.ap-south-1.amazonaws.com/nuget/training-npm-store/v3/index.json": {},
         "https://zeuslearning-824100177805.d.codeartifact.ap-south-1.amazonaws.com/nuget/training-nuget-store/v3/index.json": {}
       },
       "frameworks": {
