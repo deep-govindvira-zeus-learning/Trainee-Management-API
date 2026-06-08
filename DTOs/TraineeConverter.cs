@@ -23,11 +23,14 @@ public static class TraineeConverter
     {
         return new Trainee
         {
+            Id = Guid.NewGuid().ToString(),
             FirstName = request.FirstName,
             LastName = request.LastName,
             Email = request.Email,
             TechStack = request.TechStack,
             Status = request.Status.ToString(),
+            CreatedDate = DateTime.UtcNow,
+            UpdatedDate = DateTime.UtcNow
         };
     }
 

@@ -1,3 +1,6 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
+using TraineeManagementApi.Data;
 using TraineeManagementApi.DTOs;
 using TraineeManagementApi.Models;
 
@@ -5,80 +8,74 @@ namespace TraineeManagementApi.Services;
 
 public class TraineeService : ITraineeService
 {
-    private static readonly List<Trainee> trainees = new();
+    private readonly AppDbContext _context;
 
-    // private readonly AppDbContext _context;
-
-    // public TraineeService(AppDbContext context)
-    // {
-    //     _context = context;
-    // }
-
-    public List<TraineeResponse> GetAllTrainees()
+    public TraineeService(AppDbContext context)
     {
+        _context = context;
+    }
+
+    public async Task<List<TraineeResponse>> GetAllTraineeAsync(string? search)
+    {
+        var query = _context.Trainees.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            search = search.ToLower();
+
+            query = query.Where(trainee => 
+                trainee.FirstName.ToLower().Contains(search) ||
+                trainee.LastName.ToLower().Contains(search) ||
+                trainee.Email.ToLower().Contains(search) ||
+                trainee.TechStack.ToLower().Contains(search)
+            );
+        }
+
+        var trainees = await query.ToListAsync();
+
         return TraineeConverter.ToTraineeResponseList(trainees);
     }
 
-    public TraineeResponse? GetTraineeResponseById(string traineeId)
+    public async Task<TraineeResponse?> GetTraineeByIdAsync(string id)
     {
-        foreach(var trainee in trainees)
-            if (trainee.Id.Equals(traineeId))
-                return TraineeConverter.ToTraineeResponse(trainee);
-
-        return null;
-        // return _context.Trainees.Find(traineeId);
-    }
-
-    public Trainee? GetTraineeById(string traineeId)
-    {
-        foreach(var trainee in trainees) if (trainee.Id.Equals(traineeId)) return trainee;
-
-        return null;
-        // return _context.Trainees.Find(traineeId);
-    }
-
-    public TraineeResponse CreateTrainee(CreateTraineeRequest createTraineeRequest)
-    {
-        Trainee trainee = TraineeConverter.ToTrainee(createTraineeRequest);
-        trainee.Id = Guid.NewGuid().ToString();
-        trainee.CreatedDate = DateTime.UtcNow;
-        trainee.UpdatedDate = DateTime.UtcNow;
-
-        trainees.Add(trainee);
-
-        // EF Core pattern:
-        // _context.Trainees.Add(trainee);
-        // _context.SaveChanges();
-
+        var trainee = await _context.Trainees.FindAsync(id);
+        if (trainee == null) return null;
         return TraineeConverter.ToTraineeResponse(trainee);
     }
 
-    public TraineeResponse? UpdateTrainee(string id, UpdateTraineeRequest request)
+    public async Task<TraineeResponse> CreateTraineeAsync(CreateTraineeRequest request)
     {
-        Trainee updateTrainee = TraineeConverter.ToTrainee(request);
-
-        foreach (var trainee in trainees)
-        {
-            if (trainee.Id.Equals(id))
-            {
-                trainee.FirstName = updateTrainee.FirstName;
-                trainee.LastName = updateTrainee.LastName;
-                trainee.Status = updateTrainee.Status;
-                trainee.TechStack = updateTrainee.TechStack;
-                trainee.Email = updateTrainee.Email;
-                trainee.UpdatedDate = DateTime.UtcNow;
-
-                return TraineeConverter.ToTraineeResponse(trainee);
-            }
-
-        }
-
-        return null;
+        Trainee trainee = TraineeConverter.ToTrainee(request);
+        await _context.Trainees.AddAsync(trainee);
+        await _context.SaveChangesAsync();
+        return TraineeConverter.ToTraineeResponse(trainee);
     }
 
-    public bool DeleteTraineeById(string traineeId)
+
+    public async Task<TraineeResponse> UpdateTraineeAsync(string id, UpdateTraineeRequest request)
     {
-        return trainees.Remove(GetTraineeById(traineeId));
+        var existing = await _context.Trainees.FindAsync(id);
+        if (existing == null) return null;
+
+        existing.FirstName = request.FirstName;
+        existing.LastName = request.LastName;
+        existing.Email = request.Email;
+        existing.TechStack = request.TechStack;
+        existing.Status = request.Status;
+        existing.UpdatedDate = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return TraineeConverter.ToTraineeResponse(existing);
+    }
+
+    public async Task<bool> DeleteTraineeAsync(string id)
+    {
+        var trainee = await _context.Trainees.FindAsync(id);
+        if (trainee == null) return false;
+
+        _context.Trainees.Remove(trainee);
+        await _context.SaveChangesAsync();
+        return true;
     }
 }
 

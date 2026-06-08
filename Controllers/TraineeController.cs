@@ -16,48 +16,42 @@ public class TraineesController : ControllerBase
     }
 
     [HttpGet]
-    public IActionResult GetALlTrainees()
+    public async Task<IActionResult> GetAllTrainee([FromQuery] string? search)
     {
-        return Ok(_service.GetAllTrainees());
+        var trainees = await _service.GetAllTraineeAsync(search);
+        return Ok(trainees);
     }
 
     [HttpGet("{id}")]
-    public IActionResult GetTraineeById(string id)
+    public async Task<IActionResult> GetTraineeById(string id)
     {
-        var response = _service.GetTraineeResponseById(id);
-
+        var response = await _service.GetTraineeByIdAsync(id);
         if (response == null) return NotFound($"Trainee with ID {id} was not found.");
-
         return Ok(response);
     }
 
     [HttpPost]
-    public IActionResult CreateTrainee([FromBody] CreateTraineeRequest request)
+    public async Task<IActionResult> CreateTrainee([FromBody] CreateTraineeRequest request)
     {
-        var response = _service.CreateTrainee(request);
-
+        var response = await _service.CreateTraineeAsync(request);
         if (response == null) return BadRequest($"Trainee is not created.");
-
         return CreatedAtAction(nameof(GetTraineeById), new { id = response.Id }, response);
     }
 
     [HttpPut("{id}")]
-    public IActionResult UpdateTrainee(string id, [FromBody] UpdateTraineeRequest request)
+    public async Task<IActionResult> UpdateTrainee(string id, [FromBody] UpdateTraineeRequest request)
     {
         if (request == null) return BadRequest();
-
-        var response = _service.UpdateTrainee(id, request);
-
+        var response = await _service.UpdateTraineeAsync(id, request);
         if (response == null) return NotFound($"Trainee with ID {id} was not found.");
-
         return Ok(response);
     }
 
     [HttpDelete("{id}")]
-    public IActionResult DeleteTrainee(string id)
+    public async Task<IActionResult> DeleteTrainee(string id)
     {
-        if (!_service.DeleteTraineeById(id)) return NotFound();
-
+        var deleted = await _service.DeleteTraineeAsync(id);
+        if (!deleted) return NotFound();
         return NoContent();
     }
 }
