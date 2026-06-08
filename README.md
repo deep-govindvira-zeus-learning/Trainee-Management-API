@@ -9,7 +9,7 @@ C# And .NET CORE
 3. Created Trainee Model  
 4. Created In-Memory Trainee List  
 5. Created GET, POST, PUT, DELETE methods for trainee.
-6. Created TraineeDTO, TraineeService, TraineeConverter.
+6. Created TraineeDTO, TraineeController, TraineeService, TraineeConverter.
 7. Added Validations on request.
 8. Added AppDbContext and search Api.
  
@@ -19,12 +19,13 @@ git clone https://github.com/deep-govindvira-zeus-learning/Trainee-Management-AP
 
 cd Trainee-Management-API
 
-dotnet run --launch-profile https
+dotnet run
 ```
 
 ## Challenges Faced
 - I faced challenges while creating the api. To overcome challenges i used help of official documentation of .NET Core and C#  
 - I faced challenges while addding service layer and updating conroller
+- I faced challenges while downloading a package due to aws restrictions. 
 
 ## Api Endpoints
 
