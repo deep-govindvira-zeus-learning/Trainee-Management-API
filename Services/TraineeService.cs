@@ -36,7 +36,7 @@ public class TraineeService : ITraineeService
         return TraineeConverter.ToTraineeResponseList(trainees);
     }
 
-    public async Task<TraineeResponse?> GetTraineeByIdAsync(string id)
+    public async Task<TraineeResponse> GetTraineeByIdAsync(string id)
     {
         var trainee = await _context.Trainees.FindAsync(id);
         if (trainee == null) return null;
