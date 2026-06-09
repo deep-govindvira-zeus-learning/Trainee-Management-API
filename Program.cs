@@ -14,64 +14,69 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 builder.Services.AddValidation();
+// builder.Services.AddDbContext<AppDbContext>(options =>
+// {
+//     options.UseInMemoryDatabase("TraineeManagementDb");
+// });
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    options.UseInMemoryDatabase("TraineeManagementDb");
-});
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 
 builder.Services.AddScoped<ITraineeService, TraineeService>();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+// using (var scope = app.Services.CreateScope())
+// {
+//     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-    // Ensure the in-memory store is fully initiated
-    context.Database.EnsureCreated();
+//     // Ensure the in-memory store is fully initiated
+//     context.Database.EnsureCreated();
 
-    // Check if data already exists to avoid redundant duplication during restarts
-    if (!context.Trainees.Any())
-    {
-        context.Trainees.AddRange(
-            new Trainee
-            {
-                Id = Guid.NewGuid().ToString(),
-                FirstName = "Deep",
-                LastName = "Govindvira",
-                Email = "deep.govindvira@zeuslearning.com",
-                TechStack = "C#, .NET",
-                Status = "Active",
-                CreatedDate = DateTime.UtcNow,
-                UpdatedDate = DateTime.UtcNow
-            },
-            new Trainee
-            {
-                Id = Guid.NewGuid().ToString(),
-                FirstName = "Yash",
-                LastName = "Gokulgandhi",
-                Email = "yash.gokulgandhi@zeuslearning.com",
-                TechStack = "Java, Spring Boot",
-                Status = "InActive",
-                CreatedDate = DateTime.UtcNow,
-                UpdatedDate = DateTime.UtcNow
-            },
-            new Trainee
-            {
-                Id = Guid.NewGuid().ToString(),
-                FirstName = "Divyang",
-                LastName = "Dhamelia",
-                Email = "divyang.dhamelia@zeuslearning.com",
-                TechStack = "React, Node",
-                Status = "Completed",
-                CreatedDate = DateTime.UtcNow,
-                UpdatedDate = DateTime.UtcNow
-            }
-        );
-        context.SaveChanges();
-    }
-}
+//     // Check if data already exists to avoid redundant duplication during restarts
+//     if (!context.Trainees.Any())
+//     {
+//         context.Trainees.AddRange(
+//             new Trainee
+//             {
+//                 Id = Guid.NewGuid().ToString(),
+//                 FirstName = "Deep",
+//                 LastName = "Govindvira",
+//                 Email = "deep.govindvira@zeuslearning.com",
+//                 TechStack = "C#, .NET",
+//                 Status = "Active",
+//                 CreatedDate = DateTime.UtcNow,
+//                 UpdatedDate = DateTime.UtcNow
+//             },
+//             new Trainee
+//             {
+//                 Id = Guid.NewGuid().ToString(),
+//                 FirstName = "Yash",
+//                 LastName = "Gokulgandhi",
+//                 Email = "yash.gokulgandhi@zeuslearning.com",
+//                 TechStack = "Java, Spring Boot",
+//                 Status = "InActive",
+//                 CreatedDate = DateTime.UtcNow,
+//                 UpdatedDate = DateTime.UtcNow
+//             },
+//             new Trainee
+//             {
+//                 Id = Guid.NewGuid().ToString(),
+//                 FirstName = "Divyang",
+//                 LastName = "Dhamelia",
+//                 Email = "divyang.dhamelia@zeuslearning.com",
+//                 TechStack = "React, Node",
+//                 Status = "Completed",
+//                 CreatedDate = DateTime.UtcNow,
+//                 UpdatedDate = DateTime.UtcNow
+//             }
+//         );
+//         context.SaveChanges();
+//     }
+// }
 
 
 // Configure the HTTP request pipeline.
@@ -91,15 +96,5 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-
-// app.MapGet("/api/health", () =>
-// {
-//     return Results.Ok(new
-//     {
-//         status = "running",
-//         application = "Trainee Management API",
-//         timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss")
-//     });
-// });
 
 app.Run();
