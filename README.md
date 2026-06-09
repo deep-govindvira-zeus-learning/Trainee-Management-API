@@ -12,6 +12,7 @@ C# And .NET CORE
 6. Created TraineeDTO, TraineeController, TraineeService, TraineeConverter.
 7. Added Validations on request.
 8. Added AppDbContext and search Api.
+9. Moved from in memory db to real MySQL database.
  
 ## How to Run
 ```
@@ -20,6 +21,18 @@ git clone https://github.com/deep-govindvira-zeus-learning/Trainee-Management-AP
 cd Trainee-Management-API
 
 dotnet run
+```
+
+### MySQL setup steps.
+```
+dotnet add package Pomelo.EntityFrameworkCore.MySql
+dotnet add package Microsoft.EntityFrameworkCore.Design
+```
+
+### EF Core migration commands.
+```
+dotnet ef migrations add InitialCreate
+dotnet ef database update
 ```
 
 ## Challenges Faced
