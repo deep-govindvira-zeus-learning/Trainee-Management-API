@@ -13,6 +13,7 @@ C# And .NET CORE
 7. Added Validations on request.
 8. Added AppDbContext and search Api.
 9. Moved from in memory db to real MySQL database.
+10. Create login api and implemented authorization.
  
 ## How to Run
 ```
