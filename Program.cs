@@ -1,9 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using TraineeManagementApi.Configurations;
 using TraineeManagementApi.Data;
 using TraineeManagementApi.Models;
 using TraineeManagementApi.Services;
@@ -23,7 +21,7 @@ builder.Services.AddValidation();
 //     options.UseInMemoryDatabase("TraineeManagementDb");
 // });
 
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+// builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
 // db connection
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
