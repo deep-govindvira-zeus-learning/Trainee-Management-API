@@ -18,9 +18,13 @@ public class TraineesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAllTrainee([FromQuery] string? search)
+    public async Task<IActionResult> GetAllTrainee(
+    [FromQuery] string? search,
+    [FromQuery] string? status,
+    [FromQuery] int pageNumber = 1,
+    [FromQuery] int pageSize = 10)
     {
-        var trainees = await _service.GetAllTraineeAsync(search);
+        var trainees = await _service.GetAllTraineeAsync(search, status, pageNumber, pageSize);
         return Ok(trainees);
     }
 

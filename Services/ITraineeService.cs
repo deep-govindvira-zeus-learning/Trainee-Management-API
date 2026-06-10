@@ -4,7 +4,12 @@ namespace TraineeManagementApi.Services;
 
 public interface ITraineeService
 {
-    Task<List<TraineeResponse>> GetAllTraineeAsync(string? search);
+    Task<PagedResponse<TraineeResponse>> GetAllTraineeAsync(
+        string? search,
+        string? status,
+        int pageNumber,
+        int pageSize);
+
     Task<TraineeResponse> GetTraineeByIdAsync(string id);
     Task<TraineeResponse> CreateTraineeAsync(CreateTraineeRequest request);
     Task<TraineeResponse> UpdateTraineeAsync(string id, UpdateTraineeRequest request);
