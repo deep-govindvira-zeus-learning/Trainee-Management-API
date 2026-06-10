@@ -146,18 +146,6 @@ using (var scope = app.Services.CreateScope())
            UpdatedDate = DateTime.UtcNow
        });
 
-        // context.Users.Add(new User
-        // {
-        //     Id = Guid.NewGuid().ToString(),
-        //     Username = "admin",
-        //     Email = "admin@test.com",
-        //     PasswordHash =
-        //         BCrypt.Net.BCrypt.HashPassword("Admin@123"),
-        //     Role = "Admin",
-        //     CreatedDate = DateTime.UtcNow,
-        //     UpdatedDate = DateTime.UtcNow
-        // });
-
         context.SaveChanges();
     }
 }
