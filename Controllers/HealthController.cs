@@ -1,5 +1,6 @@
 namespace TraineeManagementApi.Controllers;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TraineeManagementApi.DTOs;
 using TraineeManagementApi.Services;
