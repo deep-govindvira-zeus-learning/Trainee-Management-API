@@ -16,15 +16,23 @@ public class TraineeService : ITraineeService
         _context = context;
     }
 
-    public async Task<List<TraineeResponse>> GetAllTraineeAsync(string? search)
+    public async Task<PagedResponse<TraineeResponse>> GetAllTraineeAsync(
+        string? search,
+        string? status,
+        int pageNumber,
+        int pageSize)
     {
         var query = _context.Trainees.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            query = query.Where(trainee => trainee.Status == status);
+        }
 
         if (!string.IsNullOrWhiteSpace(search))
         {
             search = search.ToLower();
-
-            query = query.Where(trainee => 
+            query = query.Where(trainee =>
                 trainee.FirstName.ToLower().Contains(search) ||
                 trainee.LastName.ToLower().Contains(search) ||
                 trainee.Email.ToLower().Contains(search) ||
@@ -32,9 +40,26 @@ public class TraineeService : ITraineeService
             );
         }
 
-        var trainees = await query.ToListAsync();
+        int totalRecords = await query.CountAsync();
 
-        return TraineeConverter.ToTraineeResponseList(trainees);
+        int validPageNumber = pageNumber < 1 ? 1 : pageNumber;
+        int validPageSize = pageSize < 1 ? 10 : pageSize;
+
+        var trainees = await query
+            .OrderBy(t => t.Id)
+            .Skip((validPageNumber - 1) * validPageSize)
+            .Take(validPageSize)
+            .ToListAsync();
+
+        var traineeResponses = TraineeConverter.ToTraineeResponseList(trainees);
+
+        return new PagedResponse<TraineeResponse>
+        {
+            PageNumber = validPageNumber,
+            PageSize = validPageSize,
+            TotalRecords = totalRecords,
+            Data = traineeResponses
+        };
     }
 
     public async Task<TraineeResponse> GetTraineeByIdAsync(string id)
