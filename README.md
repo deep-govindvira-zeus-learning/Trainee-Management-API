@@ -173,4 +173,23 @@ Registers a new trainee in the database.
 * **HTTP Method:** `DELETE`
 * **Path:** `/api/trainees/{id}`
 
+#### Response (`200 Ok`)
+
+### 6. Login User
+
+* **HTTP Method:** `POST`
+* **Path:** `/api/auth/login`
+
 #### Example Response (`200 Ok`)
+
+```json
+{
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOiI0ZDVjNDY2NS03ZmQxLTQ4YjMtYTgyNS1iNzg2OTBiNjE4OWYiLCJVc2VybmFtZSI6ImFkbWluIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3ODEwOTAwOTEsImlzcyI6IlRyYWluZWVNYW5hZ2VtZW50QXBpIiwiYXVkIjoiVHJhaW5lZU1hbmFnZW1lbnRDbGllbnQifQ.rFI035_QaAcDtlxRlqjXHNEMK8fnJOATnA_5F4FKHS4",
+    "expiresIn": 3600,
+    "user": {
+        "id": "4d5c4665-7fd1-48b3-a825-b78690b6189f",
+        "username": "admin",
+        "role": "Admin"
+    }
+}
+```
