@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<Trainee> Trainees { get; set; }
 
     public DbSet<User> Users { get; set; }
+    public DbSet<Mentor> Mentors { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,6 +32,14 @@ public class AppDbContext : DbContext
             entity.HasCheckConstraint(
                 "CK_User_Role",
                 "`Role` IN ('Admin', 'Mentor', 'Trainee')"
+            );
+        });
+
+        modelBuilder.Entity<Mentor>(entity =>
+        {
+            entity.HasCheckConstraint(
+                "CK_Mentor_Status",
+               "`Status` IN ('Active', 'Inactive')"
             );
         });
     }
