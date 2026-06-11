@@ -18,9 +18,11 @@ public class MentorService : IMentorService
         _logger = logger;
     }
 
-    public async Task<MentorResponse> GetAllMentorAsync()
-    {
-        return new MentorResponse();
-    }
+    // public async Task<List<MentorResponse>> GetAllMentorAsync();
+    // {
+    //     var mentors   _context.Mentors.ToListAsync();
+
+    //     return MentorConverter.ToMentorResponseList(mentors); 
+    // }
 }
 

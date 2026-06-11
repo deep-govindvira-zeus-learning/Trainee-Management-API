@@ -9,11 +9,6 @@ using TraineeManagementApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Set up Serilog using the application's configuration
-builder.Host.UseSerilog((context, configuration) =>
-    configuration.ReadFrom.Configuration(context.Configuration));
-
-
 const string ReactCorsPolicy = "_reactDevelopmentCors";
 
 builder.Services.AddCors(options =>
@@ -52,6 +47,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 
 builder.Services.AddScoped<ITraineeService, TraineeService>();
+builder.Services.AddScoped<IMentorService, MentorService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 var jwt = builder.Configuration.GetSection("Jwt");
@@ -75,10 +71,6 @@ builder.Services
     });
 
 var app = builder.Build();
-
-// Automatically logs incoming HTTP requests with structured parameters
-app.UseSerilogRequestLogging();
-
 
 using (var scope = app.Services.CreateScope())
 {
