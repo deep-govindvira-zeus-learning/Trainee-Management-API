@@ -10,10 +10,12 @@ namespace TraineeManagementApi.Services;
 public class TraineeService : ITraineeService
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<TraineeService> _logger;
 
-    public TraineeService(AppDbContext context)
+    public TraineeService(AppDbContext context, ILogger<TraineeService> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task<PagedResponse<TraineeResponse>> GetAllTraineeAsync(
@@ -71,37 +73,80 @@ public class TraineeService : ITraineeService
 
     public async Task<TraineeResponse> CreateTraineeAsync(CreateTraineeRequest request)
     {
-        Trainee trainee = TraineeConverter.ToTrainee(request);
-        await _context.Trainees.AddAsync(trainee);
-        await _context.SaveChangesAsync();
-        return TraineeConverter.ToTraineeResponse(trainee);
+        try
+        {
+            Trainee trainee = TraineeConverter.ToTrainee(request);
+            await _context.Trainees.AddAsync(trainee);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Trainee '{Firstname}' with ID '{Id}' created.", trainee.FirstName, trainee.Id);
+
+            return TraineeConverter.ToTraineeResponse(trainee);
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create trainee for Email: {Email}", request.Email);
+            return null;
+        }
     }
 
 
     public async Task<TraineeResponse> UpdateTraineeAsync(string id, UpdateTraineeRequest request)
     {
-        var existing = await _context.Trainees.FindAsync(id);
-        if (existing == null) return null;
+        try
+        {
+            var existing = await _context.Trainees.FindAsync(id);
 
-        existing.FirstName = request.FirstName;
-        existing.LastName = request.LastName;
-        existing.Email = request.Email;
-        existing.TechStack = request.TechStack;
-        existing.Status = request.Status;
-        existing.UpdatedDate = DateTime.UtcNow;
+            if (existing == null)
+            {
+                _logger.LogWarning("Failed to update trainee. Trainee with ID: {TraineeId} was not found.", id);
+                return null;
+            }
 
-        await _context.SaveChangesAsync();
-        return TraineeConverter.ToTraineeResponse(existing);
+            existing.FirstName = request.FirstName;
+            existing.LastName = request.LastName;
+            existing.Email = request.Email;
+            existing.TechStack = request.TechStack;
+            existing.Status = request.Status;
+            existing.UpdatedDate = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Updated trainee with ID: {TraineeId}", id);
+
+            return TraineeConverter.ToTraineeResponse(existing);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while updating trainee with ID: {TraineeId}", id);
+            return null;
+        }
     }
 
     public async Task<bool> DeleteTraineeAsync(string id)
     {
-        var trainee = await _context.Trainees.FindAsync(id);
-        if (trainee == null) return false;
+        try
+        {
+            var trainee = await _context.Trainees.FindAsync(id);
 
-        _context.Trainees.Remove(trainee);
-        await _context.SaveChangesAsync();
-        return true;
+            if (trainee == null)
+            {
+                _logger.LogWarning("Failed to delete trainee. Trainee with ID: {TraineeId} was not found.", id);
+                return false;
+            }
+
+            _context.Trainees.Remove(trainee);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Deleted trainee with ID: {TraineeId}", id);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while deleting trainee with ID: {TraineeId}", id);
+            throw;
+        }
     }
 }
 

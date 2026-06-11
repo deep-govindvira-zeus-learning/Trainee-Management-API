@@ -1,6 +1,7 @@
 bin/
 obj/
 Migrations/
+Logs/
 
 
 [Dd]ebug/

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Ocsp;
+using Serilog;
 using TraineeManagementApi.Data;
 using TraineeManagementApi.DTOs;
 using TraineeManagementApi.Models;
@@ -17,27 +18,39 @@ public class AuthService : IAuthService
 {
     private readonly AppDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(AppDbContext context, IConfiguration configuration)
+    public AuthService(AppDbContext context, IConfiguration configuration, ILogger<AuthService> logger)
     {
         _context = context;
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task<LoginResponse> Login(LoginRequest request)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
 
-        if (user == null) throw new Exception("User is not authorized");
+        if (user == null)
+        {
+            _logger.LogWarning("Authentication failed. Username: {Username} not found", request.Username);
+            throw new Exception("User is not authorized");
+        }
 
         bool validPassword = BCrypt.Net.BCrypt.Verify(
             request.Password,
             user.PasswordHash
         );
 
-        if (!validPassword) throw new Exception("User is not authorized");
+        if (!validPassword)
+        {
+            _logger.LogWarning("Authentication failed. Invalid password for username: {Username}", request.Username);
+            throw new Exception("User is not authorized");
+        }
 
         var token = GenerateJwtToken(user);
+
+        _logger.LogInformation("User: {Username} successfully logged in.", user.Username);
 
         return new LoginResponse
         {
