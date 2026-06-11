@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using TraineeManagementApi.Services;
 
 [ApiController]
-[Route("api/trainees")]
+[Route("api/mentors")]
 [Authorize]
 public class MentorController : ControllerBase
 {
@@ -14,5 +14,12 @@ public class MentorController : ControllerBase
     public MentorController(IMentorService service)
     {
         _service = service;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAllMentor()
+    {
+        var responses = await _service.GetAllMentorAsync();
+        return Ok(responses);
     }
 }

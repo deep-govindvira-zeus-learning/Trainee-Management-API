@@ -1,9 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
-using Org.BouncyCastle.Ocsp;
 using TraineeManagementApi.Data;
 using TraineeManagementApi.DTOs;
-using TraineeManagementApi.Models;
 
 namespace TraineeManagementApi.Services;
 
@@ -18,11 +15,11 @@ public class MentorService : IMentorService
         _logger = logger;
     }
 
-    // public async Task<List<MentorResponse>> GetAllMentorAsync();
-    // {
-    //     var mentors   _context.Mentors.ToListAsync();
+    public async Task<List<MentorResponse>> GetAllMentorAsync()
+    {
+        var mentors = await _context.Mentors.ToListAsync();
+        return MentorConverter.ToMentorResponseList(mentors); 
+    }
 
-    //     return MentorConverter.ToMentorResponseList(mentors); 
-    // }
 }
 
