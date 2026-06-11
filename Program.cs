@@ -10,7 +10,7 @@ using TraineeManagementApi.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Set up Serilog using the application's configuration
-builder.Host.UseSerilog((context, configuration) => 
+builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
 
 
@@ -77,7 +77,7 @@ builder.Services
 var app = builder.Build();
 
 // Automatically logs incoming HTTP requests with structured parameters
-app.UseSerilogRequestLogging(); 
+app.UseSerilogRequestLogging();
 
 
 using (var scope = app.Services.CreateScope())
@@ -121,6 +121,31 @@ using (var scope = app.Services.CreateScope())
                 Status = "Completed",
                 CreatedDate = DateTime.UtcNow,
                 UpdatedDate = DateTime.UtcNow
+            }
+        );
+        context.SaveChanges();
+    }
+
+    if (!context.Mentors.Any())
+    {
+        context.Mentors.AddRange(
+            new Mentor
+            {
+                Id = Guid.NewGuid().ToString(),
+                FirstName = "Kedar",
+                LastName = "Kale",
+                Email = "kedar.kale@zeuslearning.com",
+                Expertise = "C#, .NET, MERN, Angular, AWS",
+                Status = "Active",
+            },
+            new Mentor
+            {
+                Id = Guid.NewGuid().ToString(),
+                FirstName = "Tanuj",
+                LastName = "Kude",
+                Email = "tanuj.kude@zeuslearning.com",
+                Expertise = "C#, .NET",
+                Status = "Inactive",
             }
         );
         context.SaveChanges();
