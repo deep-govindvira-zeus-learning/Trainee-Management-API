@@ -21,5 +21,9 @@ public class MentorService : IMentorService
         return MentorConverter.ToMentorResponseList(mentors); 
     }
 
+    public async Task<MentorResponse> GetMentorByIdAsync(string id)
+    {
+        var mentor = await _context.Mentors.FindAsync(id);
+        return MentorConverter.ToMentorResponse(mentor);
+    }
 }
-
