@@ -2,11 +2,33 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using TraineeManagementApi.Data;
 using TraineeManagementApi.Models;
 using TraineeManagementApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Set up Serilog using the application's configuration
+builder.Host.UseSerilog((context, configuration) => 
+    configuration.ReadFrom.Configuration(context.Configuration));
+
+
+const string ReactCorsPolicy = "_reactDevelopmentCors";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: ReactCorsPolicy,
+        policy =>
+        {
+            policy
+                .WithOrigins("http://localhost:3000", "http://localhost:5173")
+                // .AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
+
 
 // Add services to the container.
 
@@ -20,8 +42,6 @@ builder.Services.AddValidation();
 // {
 //     options.UseInMemoryDatabase("TraineeManagementDb");
 // });
-
-// builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
 // db connection
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -55,6 +75,10 @@ builder.Services
     });
 
 var app = builder.Build();
+
+// Automatically logs incoming HTTP requests with structured parameters
+app.UseSerilogRequestLogging(); 
+
 
 using (var scope = app.Services.CreateScope())
 {
@@ -159,6 +183,11 @@ if (app.Environment.IsDevelopment())
     });
 
 }
+
+
+app.UseRouting();
+
+app.UseCors(ReactCorsPolicy);
 
 app.UseHttpsRedirection();
 
