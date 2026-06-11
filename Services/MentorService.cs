@@ -18,12 +18,28 @@ public class MentorService : IMentorService
     public async Task<List<MentorResponse>> GetAllMentorAsync()
     {
         var mentors = await _context.Mentors.ToListAsync();
-        return MentorConverter.ToMentorResponseList(mentors); 
+        return MentorConverter.ToMentorResponseList(mentors);
     }
 
     public async Task<MentorResponse> GetMentorByIdAsync(string id)
     {
         var mentor = await _context.Mentors.FindAsync(id);
         return MentorConverter.ToMentorResponse(mentor);
+    }
+
+    public async Task<MentorResponse> CreateMentorAsync(CreateMentorRequest request)
+    {
+        Mentor mentor = MentorConverter.ToMentor(request);
+        await _context.Mentors.AddAsync(mentor);
+        await _context.SaveChangesAsync();
+        return MentorConverter.ToMentorResponse(mentor);
+    }
+
+    public async Task<bool> DeleteMentorAsync(string id)
+    {
+        var mentor = await _context.Mentors.FindAsync(id);
+        _context.Mentors.Remove(mentor);
+        await _context.SaveChangesAsync();
+        return true;
     }
 }
