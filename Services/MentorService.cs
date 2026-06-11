@@ -42,4 +42,23 @@ public class MentorService : IMentorService
         await _context.SaveChangesAsync();
         return true;
     }
+
+    public async Task<MentorResponse> UpdateMentorAsync(string id, UpdateMentorRequest request)
+    {
+        var existing = await _context.Mentors.FindAsync(id);
+
+        if (existing == null)
+        {
+            throw new Exception($"Mentor with id: {id} not found");
+        }
+
+        existing.FirstName = request.FirstName;
+        existing.LastName = request.LastName;
+        existing.Email = request.Email;
+        existing.Expertise = request.Expertise;
+        existing.Status = request.Status;
+
+        await _context.SaveChangesAsync();
+        return MentorConverter.ToMentorResponse(existing);
+    }
 }

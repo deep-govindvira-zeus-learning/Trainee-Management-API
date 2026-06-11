@@ -43,5 +43,12 @@ public class MentorController : ControllerBase
     {
         await _service.DeleteMentorAsync(id);
         return NoContent();
-    }    
+    }  
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateMentor(string id, [FromBody] UpdateMentorRequest request)
+    {
+        var response = await _service.UpdateMentorAsync(id, request);
+        return Ok(response);
+    }
 }

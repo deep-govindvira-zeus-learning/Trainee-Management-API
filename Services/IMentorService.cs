@@ -8,6 +8,6 @@ public interface IMentorService
 
     Task<MentorResponse> GetMentorByIdAsync(string id);
     Task<MentorResponse> CreateMentorAsync(CreateMentorRequest request);
-    // Task<MentorResponse> UpdateMentorAsync(string id, UpdateTraineeRequest request);
+    Task<MentorResponse> UpdateMentorAsync(string id, UpdateMentorRequest request);
     Task<bool> DeleteMentorAsync(string id);
 }
