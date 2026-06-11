@@ -27,5 +27,4 @@ public class LearningTask
 
     [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
     public DateTime UpdatedDate { get; set; }
-
 }

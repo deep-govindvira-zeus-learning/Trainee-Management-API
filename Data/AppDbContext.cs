@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
 
     public DbSet<User> Users { get; set; }
     public DbSet<Mentor> Mentors { get; set; }
+    public DbSet<LearningTask> learningTasks { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,6 +43,13 @@ public class AppDbContext : DbContext
                "`Status` IN ('Active', 'Inactive')"
             );
         });
-    }
 
+        modelBuilder.Entity<LearningTask>(entity =>
+        {
+            entity.HasCheckConstraint(
+                "CK_LearningTask_Status",
+               "`Status` IN ('Draft', 'Published', 'Closed')"
+            );
+        });
+    }
 }
