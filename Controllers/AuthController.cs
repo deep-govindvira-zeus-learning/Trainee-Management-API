@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using TraineeManagementApi.Services;
 using TraineeManagementApi.DTOs;
-using Org.BouncyCastle.Ocsp;
-using Mysqlx;
 
 namespace TraineeManagementApi.Controllers;
 

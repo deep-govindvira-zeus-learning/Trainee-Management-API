@@ -156,8 +156,7 @@ using (var scope = app.Services.CreateScope())
             Id = Guid.NewGuid().ToString(),
             Username = "admin",
             Email = "admin@test.com",
-            PasswordHash =
-               BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
             Role = "Admin",
             CreatedDate = DateTime.UtcNow,
             UpdatedDate = DateTime.UtcNow
