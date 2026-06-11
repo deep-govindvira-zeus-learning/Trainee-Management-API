@@ -2,6 +2,7 @@ namespace TraineeManagementApi.Controllers;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TraineeManagementApi.DTOs;
 using TraineeManagementApi.Services;
 
 [ApiController]
@@ -29,4 +30,18 @@ public class MentorController : ControllerBase
         var response = await _service.GetMentorByIdAsync(id);
         return Ok(response);
     }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateMentor([FromBody] CreateMentorRequest request)
+    {
+        var response = await _service.CreateMentorAsync(request);
+        return CreatedAtAction(nameof(GetMentorById), new { id = response.Id }, response);
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteMentor(string id)
+    {
+        await _service.DeleteMentorAsync(id);
+        return NoContent();
+    }    
 }
