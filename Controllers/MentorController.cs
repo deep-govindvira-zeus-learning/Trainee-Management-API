@@ -22,4 +22,11 @@ public class MentorController : ControllerBase
         var responses = await _service.GetAllMentorAsync();
         return Ok(responses);
     }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetMentorById(string id)
+    {
+        var response = await _service.GetMentorByIdAsync(id);
+        return Ok(response);
+    }
 }

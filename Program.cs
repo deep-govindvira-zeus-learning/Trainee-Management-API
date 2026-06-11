@@ -9,6 +9,7 @@ using TraineeManagementApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 const string ReactCorsPolicy = "_reactDevelopmentCors";
 
 builder.Services.AddCors(options =>
@@ -33,6 +34,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 builder.Services.AddValidation();
+
 // builder.Services.AddDbContext<AppDbContext>(options =>
 // {
 //     options.UseInMemoryDatabase("TraineeManagementDb");
@@ -200,6 +202,8 @@ if (app.Environment.IsDevelopment())
 
 }
 
+
+// app.UseExceptionHandler(); 
 
 app.UseRouting();
 
