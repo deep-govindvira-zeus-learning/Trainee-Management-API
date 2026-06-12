@@ -95,7 +95,7 @@ using (var scope = app.Services.CreateScope())
         context.Trainees.AddRange(
             new Trainee
             {
-                Id = Guid.NewGuid().ToString(),
+                Id = "208b07fc-0511-4387-8f57-80f332381a4a",
                 FirstName = "Deep",
                 LastName = "Govindvira",
                 Email = "deep.govindvira@zeuslearning.com",
@@ -106,7 +106,7 @@ using (var scope = app.Services.CreateScope())
             },
             new Trainee
             {
-                Id = Guid.NewGuid().ToString(),
+                Id = "3631c4b3-c824-4374-a1ef-204237fccfac",
                 FirstName = "Yash",
                 LastName = "Gokulgandhi",
                 Email = "yash.gokulgandhi@zeuslearning.com",
@@ -117,7 +117,7 @@ using (var scope = app.Services.CreateScope())
             },
             new Trainee
             {
-                Id = Guid.NewGuid().ToString(),
+                Id = "522d1097-e6e4-4b91-807f-ca8358fd618e",
                 FirstName = "Divyang",
                 LastName = "Dhameliya",
                 Email = "divyang.dhameliya@zeuslearning.com",
@@ -135,7 +135,7 @@ using (var scope = app.Services.CreateScope())
         context.Mentors.AddRange(
             new Mentor
             {
-                Id = Guid.NewGuid().ToString(),
+                Id = "2fdc755a-5118-4ed8-9e21-300133d7c088",
                 FirstName = "Kedar",
                 LastName = "Kale",
                 Email = "kedar.kale@zeuslearning.com",
@@ -144,7 +144,7 @@ using (var scope = app.Services.CreateScope())
             },
             new Mentor
             {
-                Id = Guid.NewGuid().ToString(),
+                Id = "8f9241fe-9464-4d57-97d8-6964c67ff98d",
                 FirstName = "Tanuj",
                 LastName = "Kude",
                 Email = "tanuj.kude@zeuslearning.com",
@@ -174,21 +174,37 @@ using (var scope = app.Services.CreateScope())
     {
         context.LearningTasks.AddRange(new LearningTask
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = "036d2863-ff85-4861-8843-aa9f150bedec",
             Title = "Task Tracker",
             Description = "This task is about HTML, CSS, Javascript.",
             ExpectedTechStack = "HTML, CSS, Javascript",
             DueDate = new DateOnly(2026, 6, 7),
             Status = "Closed"
-        }, 
+        },
         new LearningTask
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = "0906992e-ded5-4f40-9cbf-b05767b52ba2",
             Title = "Trainee Management Api - 1",
             Description = "This task is about learning C#, .NET, MVC.",
             ExpectedTechStack = "C#, .NET",
             DueDate = new DateOnly(2026, 6, 15),
             Status = "Published"
+        });
+        context.SaveChanges();
+    }
+
+    if (!context.Assignments.Any())
+    {
+        context.Assignments.AddRange(new Assignment
+        {
+            Id = "036d2863-ff85-4861-8843-aa9f150bedec",
+            TraineeId = "208b07fc-0511-4387-8f57-80f332381a4a",
+            MentorId = "2fdc755a-5118-4ed8-9e21-300133d7c088",
+            LearningTaskId = "036d2863-ff85-4861-8843-aa9f150bedec",
+            AssignedDate = new DateOnly(2026, 7, 6),
+            DueDate = new DateOnly(2026, 8, 9),
+            Remarks = "This is remark.",
+            Status = "Assigned"
         });
         context.SaveChanges();
     }
@@ -207,7 +223,7 @@ if (app.Environment.IsDevelopment())
 }
 
 
-app.UseExceptionHandler(); 
+app.UseExceptionHandler();
 
 app.UseRouting();
 

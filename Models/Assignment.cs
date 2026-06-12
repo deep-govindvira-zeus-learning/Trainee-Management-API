@@ -18,9 +18,8 @@ public class Assignment
     public Mentor Mentor { get; set; }
 
     [Required(ErrorMessage = "LearningTaskId is required.")]
-    public string LearningTaskId { get; set; }
-
-    public LearningTask LearningTask { get; set; }
+    public string LearningTaskId { get; set; } 
+    public LearningTask LearningTask { get; set; } 
 
 
     [Required(ErrorMessage = "AssignedDate is required.")]

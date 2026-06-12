@@ -60,5 +60,21 @@ public class AppDbContext : DbContext
                "`Status` IN ('Assigned', 'InProgress', 'Submitted', 'Reviewed', 'Completed')"
             );
         });
+
+        // modelBuilder.Entity<Assignment>().HasOne(a => a.Trainee)
+        //     .WithMany()
+        //     .HasForeignKey(a => a.TraineeId)
+        //     .OnDelete(DeleteBehavior.Restrict);
+
+        // modelBuilder.Entity<Assignment>().HasOne(a => a.Mentor)
+        //     .WithMany()
+        //     .HasForeignKey(a => a.MentorId)
+        //     .OnDelete(DeleteBehavior.Restrict);
+
+        // modelBuilder.Entity<Assignment>().HasOne(a => a.LearningTask)
+        //     .WithMany()
+        //     .HasForeignKey(a => a.LearningTask)
+        //     .OnDelete(DeleteBehavior.Restrict);
+
     }
 }
