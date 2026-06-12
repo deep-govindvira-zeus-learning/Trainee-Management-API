@@ -22,7 +22,6 @@ public class Mentor
     public string Expertise { get; set; }
 
     [Required(ErrorMessage = "Status is required.")]
-    [AllowedValues("Active", "Inactive", ErrorMessage = "Status must be Active or Inactive.")]
     public string Status { get; set; }
 
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

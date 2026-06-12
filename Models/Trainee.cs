@@ -24,7 +24,6 @@ public class Trainee
     public string TechStack { get; set; }
 
     [Required(ErrorMessage = "Status is required")]
-    [AllowedValues("Active", "Inactive", "Completed", ErrorMessage = "Status must be Active, Inactive, or Completed")]
     public string Status { get; set; }
     
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
