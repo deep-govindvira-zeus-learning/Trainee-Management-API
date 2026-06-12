@@ -14,7 +14,7 @@ public class AppDbContext : DbContext
 
     public DbSet<User> Users { get; set; }
     public DbSet<Mentor> Mentors { get; set; }
-    public DbSet<LearningTask> learningTasks { get; set; }
+    public DbSet<LearningTask> LearningTasks { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
