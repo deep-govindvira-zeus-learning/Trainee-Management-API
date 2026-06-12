@@ -17,6 +17,6 @@ public class CreateLearningTaskRequest
     public DateOnly DueDate { get; set; }
 
     [Required(ErrorMessage = "Status is required.")]
-    [AllowedValues("Draft", "Published", "Closed", ErrorMessage = "Status must be Draft, Published, or Closed")]
+    [AllowedValues("Draft", "Published", "Closed", ErrorMessage = "Status must be Draft, Published, or Closed.")]
     public string Status { get; set; }
 }
