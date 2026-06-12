@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 public class UpdateTraineeRequest
 {
     [Required(ErrorMessage = "First name is required")]
-    [StringLength(50, ErrorMessage ="Maximum 50 characters are allowed in First name")]
+    [StringLength(50, ErrorMessage = "Maximum 50 characters are allowed in First name")]
     public string FirstName { get; set; }
     
     [Required(ErrorMessage = "Last name is required")]
