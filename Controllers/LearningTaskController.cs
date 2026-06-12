@@ -50,7 +50,7 @@ public class LearningTaskController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteByIdAsync(string id)
     {
-        // await _service.DeleteLearningTaskAsync(id);
+        await _service.DeleteByIdAsync(id);
         return NoContent();
     }  
 }
