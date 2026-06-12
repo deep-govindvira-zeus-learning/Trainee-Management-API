@@ -6,4 +6,5 @@ public interface ILearningTaskService
 {
     Task<List<LearningTaskResponse>> GetAllAsync();
     Task<LearningTaskResponse> GetByIdAsync(string id);
+    Task<LearningTaskResponse> CreateAsync(CreateLearningTaskRequest request);
 }
