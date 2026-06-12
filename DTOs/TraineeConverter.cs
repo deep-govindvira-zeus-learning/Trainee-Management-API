@@ -29,8 +29,6 @@ public static class TraineeConverter
             Email = request.Email,
             TechStack = request.TechStack,
             Status = request.Status.ToString(),
-            CreatedDate = DateTime.UtcNow,
-            UpdatedDate = DateTime.UtcNow
         };
     }
 
