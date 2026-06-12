@@ -42,9 +42,8 @@ public class LearningTaskController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateByIdAsync(string id, [FromBody] UpdateLearningTaskRequest request)
     {
-        // var response = await _service.UpdateMentorAsync(id, request);
-        // return Ok(response);
-        return Ok();
+        var response = await _service.UpdateByIdAsync(id, request);
+        return Ok(response);
     }
 
     [HttpDelete("{id}")]
