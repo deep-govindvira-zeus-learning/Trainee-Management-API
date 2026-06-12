@@ -2,14 +2,12 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Serilog;
 using TraineeManagementApi.Data;
 using TraineeManagementApi.Middleware;
 using TraineeManagementApi.Models;
 using TraineeManagementApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-
 
 const string ReactCorsPolicy = "_reactDevelopmentCors";
 

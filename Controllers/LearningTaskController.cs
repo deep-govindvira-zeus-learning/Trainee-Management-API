@@ -16,7 +16,6 @@ public class LearningTaskController : ControllerBase
         _service = service;
     }
 
-
     [HttpGet]
     public async Task<IActionResult> GetAllAsync()
     {
