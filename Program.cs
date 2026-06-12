@@ -144,12 +144,6 @@ using (var scope = app.Services.CreateScope())
         );
         context.SaveChanges();
     }
-}
-
-using (var scope = app.Services.CreateScope())
-{
-    var context =
-        scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
     if (!context.Users.Any())
     {
@@ -162,30 +156,7 @@ using (var scope = app.Services.CreateScope())
             Role = "Admin",
             CreatedDate = DateTime.UtcNow,
             UpdatedDate = DateTime.UtcNow
-        },
-        new User
-        {
-            Id = Guid.NewGuid().ToString(),
-            Username = "kedar",
-            Email = "kedar@test.com",
-            PasswordHash =
-               BCrypt.Net.BCrypt.HashPassword("kedar@123"),
-            Role = "Mentor",
-            CreatedDate = DateTime.UtcNow,
-            UpdatedDate = DateTime.UtcNow
-        },
-       new User
-       {
-           Id = Guid.NewGuid().ToString(),
-           Username = "deep",
-           Email = "deep@test.com",
-           PasswordHash =
-               BCrypt.Net.BCrypt.HashPassword("deep@123"),
-           Role = "Trainee",
-           CreatedDate = DateTime.UtcNow,
-           UpdatedDate = DateTime.UtcNow
-       });
-
+        });
         context.SaveChanges();
     }
 }
