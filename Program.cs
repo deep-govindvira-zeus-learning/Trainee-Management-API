@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using TraineeManagementApi.Data;
+using TraineeManagementApi.Middleware;
 using TraineeManagementApi.Models;
 using TraineeManagementApi.Services;
 
@@ -29,6 +30,10 @@ builder.Services.AddCors(options =>
 // Add services to the container.
 
 builder.Services.AddControllers();
+
+// Register Problem Details and the Global Exception Handler
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -204,7 +209,7 @@ if (app.Environment.IsDevelopment())
 }
 
 
-// app.UseExceptionHandler(); 
+app.UseExceptionHandler(); 
 
 app.UseRouting();
 
