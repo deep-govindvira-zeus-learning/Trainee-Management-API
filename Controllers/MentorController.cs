@@ -18,37 +18,37 @@ public class MentorController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAllMentor()
+    public async Task<IActionResult> GetAllAsync()
     {
-        var responses = await _service.GetAllMentorAsync();
+        var responses = await _service.GetAllAsync();
         return Ok(responses);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetMentorById(string id)
     {
-        var response = await _service.GetMentorByIdAsync(id);
+        var response = await _service.GetByIdAsync(id);
         return Ok(response);
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateMentor([FromBody] CreateMentorRequest request)
     {
-        var response = await _service.CreateMentorAsync(request);
+        var response = await _service.CreateAsync(request);
         return CreatedAtAction(nameof(GetMentorById), new { id = response.Id }, response);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteMentor(string id)
     {
-        await _service.DeleteMentorAsync(id);
+        await _service.DeleteByIdAsync(id);
         return NoContent();
     }  
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateMentor(string id, [FromBody] UpdateMentorRequest request)
     {
-        var response = await _service.UpdateMentorAsync(id, request);
+        var response = await _service.UpdateByIdAsync(id, request);
         return Ok(response);
     }
 }

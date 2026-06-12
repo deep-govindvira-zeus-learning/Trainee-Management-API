@@ -15,19 +15,19 @@ public class MentorService : IMentorService
         _logger = logger;
     }
 
-    public async Task<List<MentorResponse>> GetAllMentorAsync()
+    public async Task<List<MentorResponse>> GetAllAsync()
     {
         var mentors = await _context.Mentors.ToListAsync();
         return MentorConverter.ToMentorResponseList(mentors);
     }
 
-    public async Task<MentorResponse> GetMentorByIdAsync(string id)
+    public async Task<MentorResponse> GetByIdAsync(string id)
     {
         var mentor = await _context.Mentors.FindAsync(id);
         return MentorConverter.ToMentorResponse(mentor);
     }
 
-    public async Task<MentorResponse> CreateMentorAsync(CreateMentorRequest request)
+    public async Task<MentorResponse> CreateAsync(CreateMentorRequest request)
     {
         Mentor mentor = MentorConverter.ToMentor(request);
         await _context.Mentors.AddAsync(mentor);
@@ -35,7 +35,7 @@ public class MentorService : IMentorService
         return MentorConverter.ToMentorResponse(mentor);
     }
 
-    public async Task<bool> DeleteMentorAsync(string id)
+    public async Task<bool> DeleteByIdAsync(string id)
     {
         var mentor = await _context.Mentors.FindAsync(id);
         _context.Mentors.Remove(mentor);
@@ -43,7 +43,7 @@ public class MentorService : IMentorService
         return true;
     }
 
-    public async Task<MentorResponse> UpdateMentorAsync(string id, UpdateMentorRequest request)
+    public async Task<MentorResponse> UpdateByIdAsync(string id, UpdateMentorRequest request)
     {
         var existing = await _context.Mentors.FindAsync(id);
 

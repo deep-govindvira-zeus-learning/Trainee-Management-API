@@ -4,10 +4,10 @@ namespace TraineeManagementApi.Services;
 
 public interface IMentorService
 {
-    Task<List<MentorResponse>> GetAllMentorAsync();
+    Task<List<MentorResponse>> GetAllAsync();
 
-    Task<MentorResponse> GetMentorByIdAsync(string id);
-    Task<MentorResponse> CreateMentorAsync(CreateMentorRequest request);
-    Task<MentorResponse> UpdateMentorAsync(string id, UpdateMentorRequest request);
-    Task<bool> DeleteMentorAsync(string id);
+    Task<MentorResponse> GetByIdAsync(string id);
+    Task<MentorResponse> CreateAsync(CreateMentorRequest request);
+    Task<MentorResponse> UpdateByIdAsync(string id, UpdateMentorRequest request);
+    Task<bool> DeleteByIdAsync(string id);
 }
