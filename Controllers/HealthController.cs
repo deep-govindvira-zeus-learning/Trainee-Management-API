@@ -21,7 +21,7 @@ public class HealthController : ControllerBase
     {
         try
         {
-            var trainees = await _service.GetAllTraineeAsync("", "", 0, 0);
+            var trainees = await _service.GetAllAsync("", "", 0, 0);
             return Ok(new
             {
                 status = "healthy",
