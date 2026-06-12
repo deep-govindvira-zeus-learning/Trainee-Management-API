@@ -24,40 +24,35 @@ public class TraineesController : ControllerBase
     [FromQuery] int pageNumber = 1,
     [FromQuery] int pageSize = 10)
     {
-        var trainees = await _service.GetAllTraineeAsync(search, status, pageNumber, pageSize);
+        var trainees = await _service.GetAllAsync(search, status, pageNumber, pageSize);
         return Ok(trainees);
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetTraineeById(string id)
+    public async Task<IActionResult> GetByIdAsync(string id)
     {
-        var response = await _service.GetTraineeByIdAsync(id);
-        if (response == null) return NotFound($"Trainee with ID {id} was not found.");
+        var response = await _service.GetByIdAsync(id);
         return Ok(response);
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateTrainee([FromBody] CreateTraineeRequest request)
+    public async Task<IActionResult> CreateAsync([FromBody] CreateTraineeRequest request)
     {
-        var response = await _service.CreateTraineeAsync(request);
-        if (response == null) return BadRequest($"Trainee is not created.");
-        return CreatedAtAction(nameof(GetTraineeById), new { id = response.Id }, response);
+        var response = await _service.CreateAsync(request);
+        return CreatedAtAction(nameof(GetByIdAsync), new { id = response.Id }, response);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateTrainee(string id, [FromBody] UpdateTraineeRequest request)
+    public async Task<IActionResult> UpdateByIdAsync(string id, [FromBody] UpdateTraineeRequest request)
     {
-        if (request == null) return BadRequest();
-        var response = await _service.UpdateTraineeAsync(id, request);
-        if (response == null) return NotFound($"Trainee with ID {id} was not found.");
+        var response = await _service.UpdateByIdAsync(id, request);
         return Ok(response);
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteTrainee(string id)
+    public async Task<IActionResult> DeleteByIdAsync(string id)
     {
-        var deleted = await _service.DeleteTraineeAsync(id);
-        if (!deleted) return NotFound();
+        await _service.DeleteByIdAsync(id);
         return NoContent();
     }
 }
