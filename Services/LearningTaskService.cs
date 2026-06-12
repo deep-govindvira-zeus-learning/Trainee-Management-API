@@ -26,4 +26,11 @@ public class LearningTaskService : ILearningTaskService
         return LearningTaskConverter.ToLearningTaskResponse(task);
     }
 
+    public async Task<LearningTaskResponse> CreateAsync(CreateLearningTaskRequest request)
+    {
+        LearningTask task = LearningTaskConverter.ToLearningTask(request);
+        await _context.LearningTasks.AddAsync(task);
+        await _context.SaveChangesAsync();
+        return LearningTaskConverter.ToLearningTaskResponse(task);
+    }
 }

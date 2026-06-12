@@ -35,9 +35,8 @@ public class LearningTaskController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateAsync([FromBody] CreateLearningTaskRequest request)
     {
-        // var response = await _service.CreateMentorAsync(request);
-        // return CreatedAtAction(nameof(GetMentorById), new { id = response.Id }, response);
-        return CreatedAtAction(nameof(GetByIdAsync), new { id = ""});
+        var response = await _service.CreateAsync(request);
+        return CreatedAtAction(nameof(GetByIdAsync), new { id = response.Id }, response);
     }
 
     [HttpPut("{id}")]
