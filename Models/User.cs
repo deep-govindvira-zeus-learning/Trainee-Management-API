@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace TraineeManagementApi.Models;
@@ -9,23 +10,22 @@ public class User
     [Key]
     public string Id { get; set; }
 
-    [Required]
+    [Required(ErrorMessage = "Username is required.")]
     public string Username { get; set; }
 
-    [Required]
+    [Required(ErrorMessage = "Email is required.")]
     public string Email { get; set; }
 
-    [Required]
+    [Required(ErrorMessage = "PasswordHash is required.")]
     public string PasswordHash { get; set; }
 
-    [Required]
-    [RegularExpression("^(Admin|Mentor|Trainee)$", ErrorMessage = "Role must be Admin, Mentor, or Trainee.")]
+    [Required(ErrorMessage = "Role is required.")]
     public string Role { get; set; }
 
-    [Required]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public DateTime CreatedDate { get; set; }
 
-    [Required]
+    [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
     public DateTime UpdatedDate { get; set; }
 
 }
