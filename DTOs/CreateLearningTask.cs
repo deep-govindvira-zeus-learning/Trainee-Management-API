@@ -1,10 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-public class LearningTask
+public class CreateLearningTask
 {
-    [Key]
-    public string Id { get; set; }
 
     [Required]
     [MaxLength(50)]
@@ -21,10 +19,4 @@ public class LearningTask
 
     [Required]
     public string Status { get; set; }
-
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public DateTime CreatedDate { get; set; }
-
-    [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-    public DateTime UpdatedDate { get; set; }
 }
