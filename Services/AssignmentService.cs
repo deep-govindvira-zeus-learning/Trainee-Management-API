@@ -6,7 +6,6 @@ namespace TraineeManagementApi.Services;
 public class AssignmentService : IAssignmentService
 {
     private readonly AppDbContext _context;
-    private readonly IConfiguration _configuration;
     private readonly ILogger<AuthService> _logger;
 
     public AssignmentService(AppDbContext context, ILogger<AuthService> logger)
