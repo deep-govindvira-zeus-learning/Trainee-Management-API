@@ -34,6 +34,26 @@ public class LearningTaskService : ILearningTaskService
         return LearningTaskConverter.ToLearningTaskResponse(task);
     }
 
+    public async Task<LearningTaskResponse> UpdateByIdAsync(string id, UpdateLearningTaskRequest request)
+    {
+        var existing = await _context.LearningTasks.FindAsync(id);
+
+        if (existing == null)
+        {
+            throw new Exception($"Learning Task with {id} not found");
+        }
+
+        existing.Title = request.Title;
+        existing.Description = request.Description;
+        existing.ExpectedTechStack = request.ExpectedTechStack;
+        existing.DueDate = request.DueDate;
+        existing.Status = request.Status;
+
+        await _context.SaveChangesAsync();
+
+        return LearningTaskConverter.ToLearningTaskResponse(existing);
+    }
+
     public async Task<bool> DeleteByIdAsync(string id)
     {
         var task = await _context.LearningTasks.FindAsync(id);
