@@ -33,4 +33,12 @@ public class LearningTaskService : ILearningTaskService
         await _context.SaveChangesAsync();
         return LearningTaskConverter.ToLearningTaskResponse(task);
     }
+
+    public async Task<bool> DeleteByIdAsync(string id)
+    {
+        var task = await _context.LearningTasks.FindAsync(id);
+        _context.LearningTasks.Remove(task);
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }
