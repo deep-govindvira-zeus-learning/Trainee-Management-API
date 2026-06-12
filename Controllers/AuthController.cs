@@ -4,7 +4,6 @@ using TraineeManagementApi.DTOs;
 
 namespace TraineeManagementApi.Controllers;
 
-
 [ApiController]
 [Route("api/auth")]
 public class AuthController : ControllerBase
