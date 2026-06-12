@@ -159,6 +159,29 @@ using (var scope = app.Services.CreateScope())
         });
         context.SaveChanges();
     }
+
+    if (!context.LearningTasks.Any())
+    {
+        context.LearningTasks.AddRange(new LearningTask
+        {
+            Id = Guid.NewGuid().ToString(),
+            Title = "Task Tracker",
+            Description = "This task is about HTML, CSS, Javascript.",
+            ExpectedTechStack = "HTML, CSS, Javascript",
+            DueDate = new DateOnly(2026, 6, 7),
+            Status = "Closed"
+        }, 
+        new LearningTask
+        {
+            Id = Guid.NewGuid().ToString(),
+            Title = "Trainee Management Api - 1",
+            Description = "This task is about learning C#, .NET, MVC.",
+            ExpectedTechStack = "C#, .NET",
+            DueDate = new DateOnly(2026, 6, 15),
+            Status = "Published"
+        });
+        context.SaveChanges();
+    }
 }
 
 // Configure the HTTP request pipeline.
