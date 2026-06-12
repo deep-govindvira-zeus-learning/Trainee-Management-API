@@ -1,9 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
-public class CreateLearningTask
+public class CreateLearningTaskRequest
 {
-
     [Required]
     [MaxLength(50)]
     public string Title { get; set; }
@@ -15,6 +13,7 @@ public class CreateLearningTask
     public string ExpectedTechStack { get; set; }
 
     [Required]
+    [DataType(DataType.Date, ErrorMessage = "Invalid date format.")]
     public DateOnly DueDate { get; set; }
 
     [Required]
