@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging;
-
 namespace TraineeManagementApi.Helper;
 
 public class CustomFileLoggerProvider : ILoggerProvider

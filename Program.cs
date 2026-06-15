@@ -11,7 +11,7 @@ using TraineeManagementApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var logPath = Path.Combine(Directory.GetCurrentDirectory(), "app_logs.txt");
+var logPath = Path.Combine(Directory.GetCurrentDirectory(), "Logs/app_logs.txt");
 builder.Logging.AddProvider(new CustomFileLoggerProvider(logPath));
 
 const string ReactCorsPolicy = "_reactDevelopmentCors";
