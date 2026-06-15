@@ -29,17 +29,24 @@ public class GlobalExceptionHandler : IExceptionHandler
             _ => (StatusCodes.Status500InternalServerError, "Internal Server Error")
         };
 
-        var problemDetails = new ProblemDetails
-        {
-            Status = statusCode,
-            Title = title,
-            Detail = exception.Message,
-            Instance = httpContext.Request.Path
-        };
+        // var problemDetails = new ProblemDetails
+        // {
+        //     Status = statusCode,
+        //     Title = title,
+        //     Detail = exception.Message,
+        //     Instance = httpContext.Request.Path,
+        // };
 
         httpContext.Response.StatusCode = statusCode;
 
-        await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+        // await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+
+        await httpContext.Response.WriteAsJsonAsync(new {
+            Status = statusCode,
+            Title = title,
+            Message = exception.Message,
+            Instance = httpContext.Request.Path,
+        }, cancellationToken);
 
         return true;
     }

@@ -1,21 +1,23 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TraineeManagementApi.DTOs;
 using TraineeManagementApi.Services;
 
 namespace TraineeManagementApi.Controllers;
 
 [ApiController]
-[Route("/api/learning-tasks")]
+[Route("/api/assignments")]
 [Authorize]
-public class LearningTaskController : ControllerBase
+public class AssignmentController : ControllerBase
 {
-    private readonly ILearningTaskService _service;
+    private readonly IAssignmentService _service;
 
-    public LearningTaskController(ILearningTaskService service)
+    public AssignmentController(IAssignmentService service)
     {
         _service = service;
     }
 
+    
     [HttpGet]
     public async Task<IActionResult> GetAllAsync()
     {
@@ -30,24 +32,18 @@ public class LearningTaskController : ControllerBase
         return Ok(response);
     }
 
+    
     [HttpPost]
-    public async Task<IActionResult> CreateAsync([FromBody] CreateLearningTaskRequest request)
+    public async Task<IActionResult> CreateAsync([FromBody] CreateAssignmentRequest request)
     {
         var response = await _service.CreateAsync(request);
         return CreatedAtAction(nameof(GetByIdAsync), new { id = response.Id }, response);
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateByIdAsync(string id, [FromBody] UpdateLearningTaskRequest request)
+    [HttpPut("{id}/status")]
+    public async Task<IActionResult> UpdateStatus(string id, [FromBody] UpdateAssignmentStatusRequest request)
     {
-        var response = await _service.UpdateByIdAsync(id, request);
+        var response = await _service.UpdateStatusAsync(id, request);
         return Ok(response);
     }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteByIdAsync(string id)
-    {
-        await _service.DeleteByIdAsync(id);
-        return NoContent();
-    }  
 }

@@ -35,8 +35,6 @@ public class TraineeService : ITraineeService
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                // Removed .ToLower() inside EF Core calls to prevent breaking database index performance.
-                // SQL Server / PostgreSQL are usually case-insensitive by default or handle it better natively.
                 query = query.Where(trainee =>
                     trainee.FirstName.Contains(search) ||
                     trainee.LastName.Contains(search) ||
