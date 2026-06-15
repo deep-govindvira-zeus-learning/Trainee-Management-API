@@ -17,6 +17,7 @@ public class AppDbContext : DbContext
     public DbSet<LearningTask> LearningTasks { get; set; }
     public DbSet<Assignment> Assignments { get; set; }
     public DbSet<Submission> Submissions { get; set; }
+    public DbSet<Review> Reviews { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -71,6 +72,14 @@ public class AppDbContext : DbContext
             );
         });
 
+        modelBuilder.Entity<Review>(entity =>
+        {
+            entity.HasCheckConstraint(
+                "CK_Review_Status",
+               "`ReviewStatus` IN ('Accepted', 'ChangesRequired', 'Rejected')"
+            );
+        });
+
         modelBuilder.Entity<Assignment>()
             .HasOne(a => a.Trainee)
             .WithMany()
@@ -93,6 +102,18 @@ public class AppDbContext : DbContext
             .HasOne(s => s.Assignment)
             .WithMany()
             .HasForeignKey(a => a.AssignmentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+         modelBuilder.Entity<Review>()
+            .HasOne(s => s.Submission)
+            .WithMany()
+            .HasForeignKey(a => a.SubmissionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Review>()
+            .HasOne(s => s.Mentor)
+            .WithMany()
+            .HasForeignKey(a => a.MentorId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

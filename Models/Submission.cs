@@ -7,7 +7,7 @@ public class Submission
     [Key]
     public string Id { get; set; }
 
-    [Required(ErrorMessage = "TaskAssignmentId is required.")]
+    [Required(ErrorMessage = "AssignmentId is required.")]
     public string AssignmentId { get; set; }
 
     public Assignment Assignment { get; set; }

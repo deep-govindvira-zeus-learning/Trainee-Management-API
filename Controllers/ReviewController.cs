@@ -1,23 +1,23 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TraineeManagementApi.DTOs;
+using TraineeManagementApi.Models;
 using TraineeManagementApi.Services;
 
 namespace TraineeManagementApi.Controllers;
 
 [ApiController]
-[Route("/api/task-assignments")]
+[Route("api/reviews")]
 [Authorize]
-public class AssignmentController : ControllerBase
+public class ReviewsController : ControllerBase
 {
-    private readonly IAssignmentService _service;
+    private readonly IReviewService _service;
 
-    public AssignmentController(IAssignmentService service)
+    public ReviewsController(IReviewService service)
     {
         _service = service;
     }
 
-    
+   
     [HttpGet]
     public async Task<IActionResult> GetAllAsync()
     {
@@ -34,16 +34,9 @@ public class AssignmentController : ControllerBase
 
     
     [HttpPost]
-    public async Task<IActionResult> CreateAsync([FromBody] CreateAssignmentRequest request)
+    public async Task<IActionResult> CreateAsync([FromBody] CreateReviewRequest request)
     {
         var response = await _service.CreateAsync(request);
         return CreatedAtAction(nameof(GetByIdAsync), new { id = response.Id }, response);
-    }
-
-    [HttpPut("{id}/status")]
-    public async Task<IActionResult> UpdateStatus(string id, [FromBody] UpdateAssignmentStatusRequest request)
-    {
-        var response = await _service.UpdateStatusByIdAsync(id, request);
-        return Ok(response);
     }
 }

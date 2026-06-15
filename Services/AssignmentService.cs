@@ -120,7 +120,7 @@ public class AssignmentService : IAssignmentService
         }
     }
 
-    public async Task<AssignmentResponse> UpdateStatusAsync(string id, UpdateAssignmentStatusRequest request)
+    public async Task<AssignmentResponse> UpdateStatusByIdAsync(string id, UpdateAssignmentStatusRequest request)
     {
         string status = request.Status;
 

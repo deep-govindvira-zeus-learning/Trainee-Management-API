@@ -1,4 +1,3 @@
-using System.Security.AccessControl;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -51,7 +50,6 @@ builder.Services.AddValidation();
 // db connection
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
@@ -63,6 +61,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILearningTaskService, LearningTaskService>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<ISubmissionService, SubmissionService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 builder.Services.AddControllers(options =>
 {
@@ -227,6 +226,21 @@ using (var scope = app.Services.CreateScope())
             Notes = "Well done.",
             Status = "Submitted",
             SubmittedDate = new DateOnly(2026, 9, 9)
+        });
+        context.SaveChanges();
+    }
+
+    if (!context.Reviews.Any())
+    {
+        context.Reviews.AddRange(new Review
+        {
+            Id = "48a0lde-9e2e-90sd-aef5-2b0287a9d0a7",
+            SubmissionId = "48a044de-9e2e-4b66-aef5-2b0287a9d0a7",
+            MentorId = "2fdc755a-5118-4ed8-9e21-300133d7c088",
+            Feedback = "Greate work.",
+            Score = 7,
+            ReviewStatus = "Accepted",
+            ReviewedDate = DateOnly.FromDateTime(DateTime.UtcNow)
         });
         context.SaveChanges();
     }
