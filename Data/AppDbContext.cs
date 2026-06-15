@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<Mentor> Mentors { get; set; }
     public DbSet<LearningTask> LearningTasks { get; set; }
     public DbSet<Assignment> Assignments { get; set; }
+    public DbSet<Submission> Submissions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -61,6 +62,15 @@ public class AppDbContext : DbContext
             );
         });
 
+        
+        modelBuilder.Entity<Submission>(entity =>
+        {
+            entity.HasCheckConstraint(
+                "CK_Submission_Status",
+               "`Status` IN ('Submitted', 'Resubmitted')"
+            );
+        });
+
         modelBuilder.Entity<Assignment>()
             .HasOne(a => a.Trainee)
             .WithMany()
@@ -77,6 +87,12 @@ public class AppDbContext : DbContext
             .HasOne(a => a.LearningTask)
             .WithMany()
             .HasForeignKey(a => a.LearningTaskId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Submission>()
+            .HasOne(s => s.Assignment)
+            .WithMany()
+            .HasForeignKey(a => a.AssignmentId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

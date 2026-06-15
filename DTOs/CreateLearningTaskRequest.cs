@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
+namespace TraineeManagementApi.DTOs;
+
 public class CreateLearningTaskRequest
 {
     [Required(ErrorMessage = "Title is required.")]

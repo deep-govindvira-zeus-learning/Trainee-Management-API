@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace TraineeManagementApi.DTOs;
 
 public class AssignmentResponse

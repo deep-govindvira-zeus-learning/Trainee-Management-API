@@ -1,13 +1,18 @@
+using System.Security.AccessControl;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TraineeManagementApi.Data;
+using TraineeManagementApi.Helper;
 using TraineeManagementApi.Middleware;
 using TraineeManagementApi.Models;
 using TraineeManagementApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var logPath = Path.Combine(Directory.GetCurrentDirectory(), "app_logs.txt");
+builder.Logging.AddProvider(new CustomFileLoggerProvider(logPath));
 
 const string ReactCorsPolicy = "_reactDevelopmentCors";
 
@@ -46,6 +51,7 @@ builder.Services.AddValidation();
 // db connection
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
@@ -56,6 +62,7 @@ builder.Services.AddScoped<IMentorService, MentorService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILearningTaskService, LearningTaskService>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
+builder.Services.AddScoped<ISubmissionService, SubmissionService>();
 
 builder.Services.AddControllers(options =>
 {
@@ -206,6 +213,20 @@ using (var scope = app.Services.CreateScope())
             DueDate = new DateOnly(2026, 8, 9),
             Remarks = "This is remark.",
             Status = "Assigned"
+        });
+        context.SaveChanges();
+    }
+
+    if (!context.Submissions.Any())
+    {
+        context.Submissions.AddRange(new Submission
+        {
+            Id = "48a044de-9e2e-4b66-aef5-2b0287a9d0a7",
+            AssignmentId = "036d2863-ff85-4861-8843-aa9f150bedec",
+            SubmissionUrl = "https://github.com/deep-govindvira-zeus-learning",
+            Notes = "Well done.",
+            Status = "Submitted",
+            SubmittedDate = new DateOnly(2026, 9, 9)
         });
         context.SaveChanges();
     }
