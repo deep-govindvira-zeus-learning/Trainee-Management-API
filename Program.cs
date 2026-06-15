@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using TraineeManagementApi.Data;
 using TraineeManagementApi.Helper;
 using TraineeManagementApi.Middleware;
@@ -9,6 +10,8 @@ using TraineeManagementApi.Models;
 using TraineeManagementApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddSerilog((services, lc) => lc.ReadFrom.Configuration(builder.Configuration));
 
 var logPath = Path.Combine(Directory.GetCurrentDirectory(), "Logs/app_logs.txt");
 builder.Logging.AddProvider(new CustomFileLoggerProvider(logPath));
@@ -258,6 +261,9 @@ if (app.Environment.IsDevelopment())
 
 }
 
+
+// This intercepts and logs every HTTP request to the console automatically
+app.UseSerilogRequestLogging(); 
 
 app.UseExceptionHandler();
 
