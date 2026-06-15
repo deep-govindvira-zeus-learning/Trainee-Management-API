@@ -6,7 +6,7 @@ using TraineeManagementApi.Services;
 namespace TraineeManagementApi.Controllers;
 
 [ApiController]
-[Route("/api/assignments")]
+[Route("/api/task-assignments")]
 [Authorize]
 public class AssignmentController : ControllerBase
 {
