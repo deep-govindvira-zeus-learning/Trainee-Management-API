@@ -32,15 +32,6 @@ public static class SubmissionConverter
 
     public static List<SubmissionResponse> ToSubmissionResponseList(List<Submission> submissions)
     {
-
-        return submissions.Select(submission => new SubmissionResponse
-        {
-            Id = submission.Id,
-            AssignmentId = submission.AssignmentId,
-            SubmissionUrl = submission.SubmissionUrl,
-            Notes = submission.Notes,
-            Status = submission.Status,
-            SubmittedDate = submission.SubmittedDate
-        }).ToList();
+        return submissions.Select(ToSubmissionResponse).ToList();
     }
 }
