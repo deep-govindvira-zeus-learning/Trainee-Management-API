@@ -34,11 +34,7 @@ public static class MentorConverter
 
     public static List<MentorResponse> ToMentorResponseList(List<Mentor> mentors)
     {
-        List<MentorResponse> responses = new();
-
-        foreach (var mentor in mentors) responses.Add(ToMentorResponse(mentor));
-
-        return responses;
+        return mentors.Select(ToMentorResponse).ToList();
     }
 }
 
