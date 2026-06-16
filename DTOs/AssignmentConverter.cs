@@ -36,17 +36,6 @@ public static class AssignmentConverter
 
     public static List<AssignmentResponse> ToAssignmentResponseList(List<Assignment> assignments)
     {
-
-          return assignments.Select(assignment => new AssignmentResponse
-            {
-                Id = assignment.Id,
-                TraineeId = assignment.TraineeId,
-                MentorId = assignment.MentorId,
-                LearningTaskId = assignment.LearningTaskId,
-                AssignedDate = assignment.AssignedDate,
-                DueDate = assignment.DueDate,
-                Status = assignment.Status,
-                Remarks = assignment.Remarks
-            }).ToList();
+        return assignments.Select(ToAssignmentResponse).ToList();
     }
 }
