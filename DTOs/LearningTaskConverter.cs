@@ -32,8 +32,6 @@ public static class LearningTaskConverter
 
     public static List<LearningTaskResponse> ToLearningTaskResponseList(List<LearningTask> tasks)
     {
-        List<LearningTaskResponse> responses = new();
-        foreach (var task in tasks) responses.Add(ToLearningTaskResponse(task));
-        return responses;
+        return tasks.Select(ToLearningTaskResponse).ToList();
     }
 }
