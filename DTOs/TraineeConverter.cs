@@ -47,12 +47,7 @@ public static class TraineeConverter
 
     public static List<TraineeResponse> ToTraineeResponseList(List<Trainee> trainees)
     {
-        List<TraineeResponse> traineeResponses = new();
-
-        foreach (var trainee in trainees) traineeResponses.Add(ToTraineeResponse(trainee));
-
-        return traineeResponses;
-
+        return trainees.Select(ToTraineeResponse).ToList();
     }
 }
 
