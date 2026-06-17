@@ -31,6 +31,10 @@ public class AppDbContext : DbContext
             );
         });
 
+        modelBuilder.Entity<User>()
+            .Property(u => u.Role)
+            .HasConversion<string>();
+
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasCheckConstraint(
@@ -63,7 +67,7 @@ public class AppDbContext : DbContext
             );
         });
 
-        
+
         modelBuilder.Entity<Submission>(entity =>
         {
             entity.HasCheckConstraint(
@@ -104,11 +108,11 @@ public class AppDbContext : DbContext
             .HasForeignKey(a => a.AssignmentId)
             .OnDelete(DeleteBehavior.Restrict);
 
-         modelBuilder.Entity<Review>()
-            .HasOne(s => s.Submission)
-            .WithMany()
-            .HasForeignKey(a => a.SubmissionId)
-            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Review>()
+           .HasOne(s => s.Submission)
+           .WithMany()
+           .HasForeignKey(a => a.SubmissionId)
+           .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Review>()
             .HasOne(s => s.Mentor)

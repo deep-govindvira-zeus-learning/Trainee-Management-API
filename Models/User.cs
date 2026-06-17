@@ -19,8 +19,11 @@ public class User
     [Required(ErrorMessage = "PasswordHash is required.")]
     public string PasswordHash { get; set; }
 
+    // [Required(ErrorMessage = "Role is required.")]
+    // public string Role { get; set; }
+
     [Required(ErrorMessage = "Role is required.")]
-    public string Role { get; set; }
+    public UserRole Role { get; set; }
 
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public DateTime CreatedDate { get; set; }

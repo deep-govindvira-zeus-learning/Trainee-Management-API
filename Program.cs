@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -10,6 +11,14 @@ using TraineeManagementApi.Models;
 using TraineeManagementApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // This converts all enums to strings automatically in your JSON API
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+
 
 builder.Services.AddSerilog((services, lc) => lc.ReadFrom.Configuration(builder.Configuration));
 
@@ -167,7 +176,7 @@ using (var scope = app.Services.CreateScope())
             Username = "admin",
             Email = "admin@test.com",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
-            Role = "Admin",
+            Role = UserRole.Admin,
         });
         context.SaveChanges();
     }
