@@ -110,9 +110,7 @@ using (var scope = app.Services.CreateScope())
                 LastName = "Govindvira",
                 Email = "deep.govindvira@zeuslearning.com",
                 TechStack = "C#, .NET",
-                Status = "Active",
-                CreatedDate = DateTime.UtcNow,
-                UpdatedDate = DateTime.UtcNow
+                Status = "Active"
             },
             new Trainee
             {
@@ -122,8 +120,6 @@ using (var scope = app.Services.CreateScope())
                 Email = "yash.gokulgandhi@zeuslearning.com",
                 TechStack = "Java, Spring Boot",
                 Status = "InActive",
-                CreatedDate = DateTime.UtcNow,
-                UpdatedDate = DateTime.UtcNow
             },
             new Trainee
             {
@@ -133,8 +129,6 @@ using (var scope = app.Services.CreateScope())
                 Email = "divyang.dhameliya@zeuslearning.com",
                 TechStack = "React, Node",
                 Status = "Completed",
-                CreatedDate = DateTime.UtcNow,
-                UpdatedDate = DateTime.UtcNow
             }
         );
         context.SaveChanges();
@@ -174,8 +168,6 @@ using (var scope = app.Services.CreateScope())
             Email = "admin@test.com",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
             Role = "Admin",
-            CreatedDate = DateTime.UtcNow,
-            UpdatedDate = DateTime.UtcNow
         });
         context.SaveChanges();
     }
