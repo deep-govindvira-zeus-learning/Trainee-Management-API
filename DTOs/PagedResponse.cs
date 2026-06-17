@@ -7,5 +7,5 @@ public class PagedResponse<T>
     public int PageSize { get; set; }
     public int TotalRecords { get; set; }
 
-    public List<T> Data { get; set; }
+    public List<T> Data { get; set; } = new();
 }
