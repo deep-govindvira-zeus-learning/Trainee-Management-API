@@ -117,7 +117,7 @@ CREATE INDEX `IX_Submissions_AssignmentId` ON `Submissions` (`AssignmentId`);
 CREATE UNIQUE INDEX `IX_Users_Username` ON `Users` (`Username`);
 
 INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
-VALUES ('20260616061403_InitialCreate', '9.0.0');
+VALUES ('20260618064826_InitialCreate', '9.0.0');
 
 COMMIT;
 

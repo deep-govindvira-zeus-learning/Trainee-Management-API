@@ -48,6 +48,7 @@ Update the connection string with your local database configuration settings:
 ```
 dotnet ef migrations add InitialCreate
 dotnet ef database update
+dotnet ef migrations script -o script/migration.sql
 ```
 
 ## Challenges Faced
