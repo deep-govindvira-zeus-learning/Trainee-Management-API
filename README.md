@@ -1,8 +1,13 @@
 # Trainee Management Api
  
+A backend API designed to streamline, track, and manage corporate or institutional trainee onboarding, performance, and course allocations.
+
 ## Technology Used
-C# And .NET CORE
- 
+- Framework: .NET 10.0 Web API
+- Database: MySQL
+- ORM: EntityFramework Core (EF Core)
+- Authentication: JSON Web Tokens (JWT)
+
 ## Features Completed
 1. Created a Asp.Net Web Api Project and successfully tested Swagger UI for API Testing.  
 2. Created Health API  
@@ -28,6 +33,15 @@ dotnet run
 ```
 dotnet add package Pomelo.EntityFrameworkCore.MySql
 dotnet add package Microsoft.EntityFrameworkCore.Design
+```
+
+Update the connection string with your local database configuration settings:
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;Port=3306;Database=trainee_management_db;Uid=YOUR_USERNAME;Pwd=YOUR_PASSWORD;"
+  }
+}
 ```
 
 ### EF Core migration commands.
