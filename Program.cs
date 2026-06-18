@@ -177,6 +177,20 @@ using (var scope = app.Services.CreateScope())
             Email = "admin@test.com",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
             Role = UserRole.Admin,
+        }, new User
+        {
+            Id = Guid.NewGuid().ToString(),
+            Username = "trainee",
+            Email = "trainee@test.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Trainee@123"),
+            Role = UserRole.Trainee,
+        }, new User
+        {
+            Id = Guid.NewGuid().ToString(),
+            Username = "mentor",
+            Email = "mentor@zeuslearning.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Mentor@123"),
+            Role = UserRole.Mentor,
         });
         context.SaveChanges();
     }

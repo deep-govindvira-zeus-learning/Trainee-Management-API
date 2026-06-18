@@ -41,6 +41,31 @@ dotnet ef database update
 - I faced challenges while addding service layer and updating conroller
 - I faced challenges while downloading a package due to aws restrictions. 
 
+# Login Credentials for Testing
+- The database automatically seeds default testing accounts during the initial migration application.
+- Admin Account
+  - Username: admin
+  - Email: admin@test.com
+  - Password: Admin@123
+- Trainee Account
+  - Username: trainee
+  - Email: trainee@test.con
+  - Password: Trainee@123
+- Mentor Account
+  - Username: mentor
+  - Email: mentor@test.com
+  - Password: Mentor@123
+# JWT Usage Instructions
+
+This API secures endpoints using Role-Based Access Control (RBAC) via JWT Bearer authentication.
+- Send a POST request to the /api/auth/login endpoint using valid test credentials.
+- Copy the string value returned inside the token field of the response payload.
+- Open your API testing tool (such as Postman or Swagger UI).
+- Add a new header to your upcoming requests with the following specific format:
+  - Header Key: AuthorizationHeader
+  - Header Value: Bearer <paste_your_token_here>
+- Token will expire in 1 hour.
+
 ## Api Endpoints
 
 ### 1. Get All Trainees
@@ -193,3 +218,15 @@ Registers a new trainee in the database.
     }
 }
 ```
+
+# Limitations
+- Memory Pagination: Large data sets fetch directly into application memory before filtering.
+
+# Security ChecklistChange 
+
+- Change all default seed passwords before launching production instances.
+- Configure strict Cross-Origin Resource Sharing (CORS) policies to block unauthorized domains.
+
+# Next Improvement Areas
+
+- Implement rate limiting on the /api/auth/login
