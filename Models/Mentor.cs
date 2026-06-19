@@ -22,7 +22,7 @@ public class Mentor
     public string Expertise { get; set; }
 
     [Required(ErrorMessage = "Status is required.")]
-    public string Status { get; set; }
+    public string Status { get; set; } // Active / Inactive
 
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public DateTime CreatedDate { get; set; }

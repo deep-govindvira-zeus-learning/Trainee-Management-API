@@ -31,7 +31,7 @@ public class Assignment
     public DateOnly DueDate { get; set; }
 
     [Required(ErrorMessage = "Status is required.")]
-    public string Status { get; set; }
+    public string Status { get; set; } // Assigned / InProgress / Submitted / Reviewed / Completed
 
     public string Remarks { get; set; } = string.Empty;
 

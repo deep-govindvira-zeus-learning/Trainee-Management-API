@@ -22,5 +22,5 @@ public class Submission
     public DateOnly SubmittedDate { get; set; }
 
     [Required(ErrorMessage = "Status is required.")]
-    public string Status { get; set; }
+    public string Status { get; set; } // Submitted / Resubmitted
 }

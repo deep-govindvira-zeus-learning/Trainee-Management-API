@@ -23,7 +23,7 @@ public class User
     // public string Role { get; set; }
 
     [Required(ErrorMessage = "Role is required.")]
-    public UserRole Role { get; set; }
+    public UserRole Role { get; set; } // Admin / Mentor / Trainee
 
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public DateTime CreatedDate { get; set; }

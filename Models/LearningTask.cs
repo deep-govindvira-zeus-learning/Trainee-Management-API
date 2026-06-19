@@ -21,7 +21,7 @@ public class LearningTask
     public DateOnly DueDate { get; set; }
 
     [Required(ErrorMessage = "Status is required.")]
-    public string Status { get; set; }
+    public string Status { get; set; } // Draft / Published / Closed
 
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public DateTime CreatedDate { get; set; }
