@@ -119,5 +119,6 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(a => a.MentorId)
             .OnDelete(DeleteBehavior.Restrict);
+
     }
 }

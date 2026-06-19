@@ -30,10 +30,5 @@ public class User
 
     [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
     public DateTime UpdatedDate { get; set; }
-
-    // Navigation property for the 1:1 relationship
-    public virtual Trainee Trainee { get; set; }
-    public virtual Mentor Mentor { get; set; }
-
 }
 

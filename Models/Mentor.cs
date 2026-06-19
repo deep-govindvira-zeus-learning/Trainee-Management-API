@@ -5,8 +5,7 @@ using TraineeManagementApi.Models;
 public class Mentor
 {
     [Key]
-    [ForeignKey(nameof(User))] // Maps Mentor.Id directly to User.Id
-    public string Id { get; set; }
+    public string Id { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "First name is required.")]
     [StringLength(50, ErrorMessage = "Maximum 50 characters are allowed in First name.")]
@@ -31,7 +30,4 @@ public class Mentor
 
     [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
     public DateTime UpdatedDate { get; set; }
-
-    // Navigation property pointing to the parent User account
-    public virtual User User { get; set; }
 }

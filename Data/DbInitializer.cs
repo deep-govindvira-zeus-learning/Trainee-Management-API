@@ -44,7 +44,7 @@ public static class DbInitializer
 
         var trainee1 = new Trainee
         {
-            Id = userTrainee1.Id,
+            Id = Guid.NewGuid().ToString(),
             FirstName = "Trainee-1",
             LastName = "Trainee-1-LastName",
             Email = "trainne1@test.com",
@@ -60,7 +60,7 @@ public static class DbInitializer
 
         var mentor1 = new Mentor
         {
-            Id = userMentor1.Id,
+            Id = Guid.NewGuid().ToString(),
             FirstName = "Mentor-1",
             LastName = "Mentor-1-LastName",
             Email = "mentor1@test.com",
