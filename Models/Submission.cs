@@ -7,6 +7,9 @@ public class Submission
     [Key]
     public string Id { get; set; }
 
+    // Navigation property for the uploaded files tracking system
+    public ICollection<SubmissionFile> Files { get; set; } = new List<SubmissionFile>();
+
     [Required(ErrorMessage = "AssignmentId is required.")]
     public string AssignmentId { get; set; }
 

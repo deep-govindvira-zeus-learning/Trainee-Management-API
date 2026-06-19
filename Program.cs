@@ -1,5 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using Core.Interfaces;
+using Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -74,6 +76,7 @@ builder.Services.AddScoped<ILearningTaskService, LearningTaskService>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<ISubmissionService, SubmissionService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddSingleton<IFileStorageService, LocalFileStorageService>();
 
 builder.Services.AddControllers(options =>
 {

@@ -18,6 +18,8 @@ public class AppDbContext : DbContext
     public DbSet<Assignment> Assignments { get; set; }
     public DbSet<Submission> Submissions { get; set; }
     public DbSet<Review> Reviews { get; set; }
+    public DbSet<SubmissionFile> SubmissionFiles { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -120,5 +122,25 @@ public class AppDbContext : DbContext
             .HasForeignKey(a => a.MentorId)
             .OnDelete(DeleteBehavior.Restrict);
 
+
+        modelBuilder.Entity<SubmissionFile>(builder =>
+        {
+            builder.ToTable("SubmissionFiles");
+            builder.HasKey(f => f.Id);
+
+            builder.Property(f => f.OriginalFileName).IsRequired().HasMaxLength(255);
+            builder.Property(f => f.StorageName).IsRequired().HasMaxLength(100);
+            builder.Property(f => f.ContentType).IsRequired().HasMaxLength(100);
+            builder.Property(f => f.Checksum).IsRequired().HasMaxLength(64);
+            builder.Property(f => f.UploadedBy).IsRequired().HasMaxLength(100);
+
+            builder.HasIndex(f => f.StorageName).IsUnique();
+
+            // Configure relation mapping targeting your string key schema
+            builder.HasOne(f => f.Submission)
+                   .WithMany(s => s.Files)
+                   .HasForeignKey(f => f.SubmissionId)
+                   .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }
