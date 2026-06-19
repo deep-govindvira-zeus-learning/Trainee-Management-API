@@ -6,7 +6,9 @@ namespace TraineeManagementApi.Models;
 public class Trainee
 {
     [Key]
+    [ForeignKey(nameof(User))] // Maps Trainee.Id directly to User.Id
     public string Id { get; set; }
+
 
     [Required(ErrorMessage = "First name is required")]
     [StringLength(50, ErrorMessage = "Maximum 50 characters are allowed in First name")]
@@ -31,5 +33,8 @@ public class Trainee
 
     [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
     public DateTime UpdatedDate { get; set; }
+
+    // Navigation property pointing to the parent User account
+    public virtual User User { get; set; }
 }
 

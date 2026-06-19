@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using TraineeManagementApi.Models;
 
 public class Mentor
 {
     [Key]
+    [ForeignKey(nameof(User))] // Maps Mentor.Id directly to User.Id
     public string Id { get; set; }
 
     [Required(ErrorMessage = "First name is required.")]
@@ -29,4 +31,7 @@ public class Mentor
 
     [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
     public DateTime UpdatedDate { get; set; }
+
+    // Navigation property pointing to the parent User account
+    public virtual User User { get; set; }
 }
