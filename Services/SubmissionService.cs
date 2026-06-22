@@ -10,25 +10,45 @@ public class SubmissionService : ISubmissionService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<SubmissionService> _logger;
-
     private readonly IFileStorageService _fileStorageService;
+    private readonly ICacheService _cacheService; // Added for distributed caching
+
     private readonly long _maxFileSize;
     private readonly string[] _allowedExtensions;
+    
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(10);
+    private const string CacheKeyAll = "submission-summary:all";
 
-    public SubmissionService(AppDbContext context, ILogger<SubmissionService> logger, IFileStorageService fileStorageService, IConfiguration configuration)
+    public SubmissionService(
+        AppDbContext context, 
+        ILogger<SubmissionService> logger, 
+        IFileStorageService fileStorageService, 
+        IConfiguration configuration,
+        ICacheService cacheService) // Injected cache service
     {
         _context = context;
         _logger = logger;
         _fileStorageService = fileStorageService;
-        _maxFileSize = configuration.GetValue<long>("FileStorage:MaxSizeBytes", 10485760); // Default 10MB
+        _cacheService = cacheService;
+        _maxFileSize = configuration.GetValue<long>("FileStorage:MaxSizeBytes", 10485760); 
         _allowedExtensions = configuration.GetSection("FileStorage:AllowedExtensions").Get<string[]>()
                              ?? new[] { ".pdf", ".docx", ".zip" };
-
     }
+
 
     public async Task<List<SubmissionResponse>> GetAllAsync()
     {
         _logger.LogInformation("Retrieving all submissions.");
+
+        // 1. Try Cache Get (Safe from failure due to RedisCacheService try/catch wrapper)
+        var cachedList = await _cacheService.GetAsync<List<SubmissionResponse>>(CacheKeyAll);
+        if (cachedList != null)
+        {
+            _logger.LogInformation("Cache HIT for key: {Key}", CacheKeyAll);
+            return cachedList;
+        }
+
+        _logger.LogInformation("Cache MISS for key: {Key}. Fetching from MySQL.", CacheKeyAll);
 
         try
         {
@@ -37,7 +57,12 @@ public class SubmissionService : ISubmissionService
                 .AsNoTracking()
                 .ToListAsync();
 
-            return SubmissionConverter.ToSubmissionResponseList(submissions);
+            var responseList = SubmissionConverter.ToSubmissionResponseList(submissions);
+
+            // 2. Populate Cache on Miss (Only metadata response summaries, no file blobs)
+            await _cacheService.SetAsync(CacheKeyAll, responseList, CacheTtl);
+
+            return responseList;
         }
         catch (Exception ex)
         {
@@ -45,6 +70,7 @@ public class SubmissionService : ISubmissionService
             throw;
         }
     }
+
 
     public async Task<SubmissionResponse> GetByIdAsync(string id)
     {
@@ -54,7 +80,18 @@ public class SubmissionService : ISubmissionService
             throw new ArgumentException("Submission ID cannot be null or empty.", nameof(id));
         }
 
-        _logger.LogInformation("Fetching submission with ID: {AssignmentId}", id);
+        // Predictable Key Convention: task-3.6 constraint
+        string cacheKey = $"submission-summary:{id}";
+
+        // 1. Try Cache Get
+        var cachedSubmission = await _cacheService.GetAsync<SubmissionResponse>(cacheKey);
+        if (cachedSubmission != null)
+        {
+            _logger.LogInformation("Cache HIT for key: {Key}", cacheKey);
+            return cachedSubmission;
+        }
+
+        _logger.LogInformation("Cache MISS for key: {Key}. Fetching from MySQL.", cacheKey);
 
         try
         {
@@ -69,7 +106,12 @@ public class SubmissionService : ISubmissionService
                 throw new KeyNotFoundException($"Submission with ID '{id}' was not found.");
             }
 
-            return SubmissionConverter.ToSubmissionResponse(submission);
+            var response = SubmissionConverter.ToSubmissionResponse(submission);
+
+            // 2. Populate Cache on Miss
+            await _cacheService.SetAsync(cacheKey, response, CacheTtl);
+
+            return response;
         }
         catch (Exception ex) when (ex is not KeyNotFoundException && ex is not ArgumentException)
         {
@@ -100,9 +142,12 @@ public class SubmissionService : ISubmissionService
             var submission = SubmissionConverter.ToSubmission(request);
 
             await _context.Submissions.AddAsync(submission);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(); // MySQL updated safely first
 
             _logger.LogInformation("Successfully recorded submission with ID: {SubmissionId}", submission.Id);
+
+            // Invalidation Strategy: Clear the parent tracking list so it re-fetches the new entity
+            await _cacheService.RemoveAsync(CacheKeyAll);
 
             return SubmissionConverter.ToSubmissionResponse(submission);
         }
@@ -110,46 +155,6 @@ public class SubmissionService : ISubmissionService
         {
             _logger.LogError(ex, "Database update exception occurred saving submission.");
             throw;
-        }
-    }
-
-    private async Task validateFilesAsync(string submissionId, List<IFormFile> files)
-    {
-        // Validation 1: Check for empty or missing payload
-        if (files == null || files.Count == 0)
-        {
-            throw new Exception("No files were uploaded.");
-        }
-
-        // Authorization Check: Verify relational record mapping context existence once
-        var submissionExists = await _context.Submissions.AnyAsync(s => s.Id == submissionId);
-        if (!submissionExists)
-        {
-            throw new Exception("User is not authorized or resource does not exist.");
-        }
-
-        var uploadedFilesResult = new List<SubmissionFileResponse>();
-
-        foreach (var file in files)
-        {
-            // Validation 2: Skip or reject empty individual files
-            if (file == null || file.Length == 0)
-            {
-                continue; // Or return BadRequest if strict validation is needed
-            }
-
-            // Validation 3: Check maximum configured file payload boundary limits
-            if (file.Length > _maxFileSize)
-            {
-                throw new Exception($"File '{file.FileName}' size exceeds the allowed limit.");
-            }
-
-            // Validation 4: Extract extension cleanly and match with allowed whitelist patterns
-            var extension = Path.GetExtension(file.FileName).ToLower();
-            if (!_allowedExtensions.Contains(extension))
-            {
-                throw new Exception($"Unsupported or untrusted file extension for '{file.FileName}'.");
-            }
         }
     }
 
@@ -162,21 +167,55 @@ public class SubmissionService : ISubmissionService
         foreach (var file in files)
         {
             var submissionFile = await SubmissionFileConverter.ToSubmissionFileAsync(submissionId, file, _fileStorageService, userIdentity);
-
             _context.SubmissionFiles.Add(submissionFile);
 
             var submissionFileResponse = SubmissionFileConverter.ToSubmissionFileResponse(submissionFile);
-
             submissionFileResponseList.Add(submissionFileResponse);
         }
 
-        // Save all database records in a single transaction batch
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(); // State committed to source of truth
 
-        _logger.LogInformation("{Count} files successfully mapped for submission {SubmissionId}",
-            files.Count, submissionId);
+        _logger.LogInformation("{Count} files successfully mapped for submission {SubmissionId}", files.Count, submissionId);
+
+        // Invalidation Strategy: Evict the individual key and the generic query tracker 
+        // to force subsequent reads to map the newly added files.
+        string individualKey = $"submission-summary:{submissionId}";
+        await _cacheService.RemoveAsync(individualKey);
+        await _cacheService.RemoveAsync(CacheKeyAll);
 
         return submissionFileResponseList;
     }
 
+    private async Task validateFilesAsync(string submissionId, List<IFormFile> files)
+    {
+        if (files == null || files.Count == 0)
+        {
+            throw new Exception("No files were uploaded.");
+        }
+
+        var submissionExists = await _context.Submissions.AnyAsync(s => s.Id == submissionId);
+        if (!submissionExists)
+        {
+            throw new Exception("User is not authorized or resource does not exist.");
+        }
+
+        foreach (var file in files)
+        {
+            if (file == null || file.Length == 0)
+            {
+                continue;
+            }
+
+            if (file.Length > _maxFileSize)
+            {
+                throw new Exception($"File '{file.FileName}' size exceeds the allowed limit.");
+            }
+
+            var extension = Path.GetExtension(file.FileName).ToLower();
+            if (!_allowedExtensions.Contains(extension))
+            {
+                throw new Exception($"Unsupported or untrusted file extension for '{file.FileName}'.");
+            }
+        }
+    }
 }

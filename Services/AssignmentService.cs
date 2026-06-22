@@ -5,18 +5,25 @@ using TraineeManagementApi.DTOs;
 
 namespace TraineeManagementApi.Services;
 
-
 public class AssignmentService : IAssignmentService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<AssignmentService> _logger;
+    private readonly ICacheService _cacheService;
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(10);
 
-    public AssignmentService(AppDbContext context, ILogger<AssignmentService> logger)
+    public AssignmentService(
+        AppDbContext context, 
+        ILogger<AssignmentService> logger, 
+        ICacheService cacheService)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
     }
 
+    // List responses are generally not cached unless using a specific pattern, 
+    // keeping it direct to MySQL source of truth.
     public async Task<List<AssignmentResponse>> GetAllAsync()
     {
         _logger.LogInformation("Fetching all assignments from the database.");
@@ -44,7 +51,17 @@ public class AssignmentService : IAssignmentService
             throw new ArgumentException("Assignment ID cannot be null or empty.", nameof(id));
         }
 
-        _logger.LogInformation("Fetching assignment with ID: {AssignmentId}", id);
+        string cacheKey = $"task-assignment:{id}";
+
+        // 1. Safe Cache Try (Task 3.6 & 3.8)
+        var cachedResponse = await _cacheService.GetAsync<AssignmentResponse>(cacheKey);
+        if (cachedResponse != null)
+        {
+            _logger.LogInformation("Cache HIT for assignment ID: {AssignmentId}", id);
+            return cachedResponse;
+        }
+
+        _logger.LogInformation("Cache MISS. Fetching assignment with ID: {AssignmentId} from MySQL.", id);
 
         try
         {
@@ -58,7 +75,12 @@ public class AssignmentService : IAssignmentService
                 throw new KeyNotFoundException($"Assignment with ID '{id}' was not found.");
             }
 
-            return AssignmentConverter.ToAssignmentResponse(assignment);
+            var response = AssignmentConverter.ToAssignmentResponse(assignment);
+
+            // 2. Safe Cache Populate
+            await _cacheService.SetAsync(cacheKey, response, CacheTtl);
+
+            return response;
         }
         catch (Exception ex) when (ex is not KeyNotFoundException && ex is not ArgumentException)
         {
@@ -66,7 +88,6 @@ public class AssignmentService : IAssignmentService
             throw;
         }
     }
-
 
     public async Task<AssignmentResponse> CreateAsync(CreateAssignmentRequest request)
     {
@@ -109,8 +130,9 @@ public class AssignmentService : IAssignmentService
             await _context.Assignments.AddAsync(assignment);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Successfully created assignment with ID: {AssignmentId}", assignment.Id);
+            _logger.LogInformation("Successfully created assignment with ID: {AssignmentId} in MySQL.", assignment.Id);
 
+            // Invalidation Note: No cache eviction needed for GetById since this ID is brand new.
             return AssignmentConverter.ToAssignmentResponse(assignment);
         }
         catch (DbUpdateException ex)
@@ -148,10 +170,15 @@ public class AssignmentService : IAssignmentService
             }
 
             assignment.Status = status;
-
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Successfully updated status for assignment ID: {AssignmentId}", id);
+            _logger.LogInformation("Successfully updated status for assignment ID: {AssignmentId} in MySQL.", id);
+
+            // 3. Proactive Cache Invalidation (Task 3.7)
+            // Evict old state instantly so stale data cannot be read on the next request.
+            string cacheKey = $"task-assignment:{id}";
+            await _cacheService.RemoveAsync(cacheKey);
+            _logger.LogInformation("Proactively invalidated cache key: {CacheKey}", cacheKey);
 
             return AssignmentConverter.ToAssignmentResponse(assignment);
         }
