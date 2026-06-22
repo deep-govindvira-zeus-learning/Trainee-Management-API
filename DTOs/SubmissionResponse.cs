@@ -11,4 +11,5 @@ public class SubmissionResponse
     public DateOnly SubmittedDate { get; set; }
 
     public string Status { get; set; } = string.Empty;
+    public List<SubmissionFileResponse> Files { get; set; } = new List<SubmissionFileResponse>();
 }

@@ -33,6 +33,7 @@ public class SubmissionService : ISubmissionService
         try
         {
             var submissions = await _context.Submissions
+                .Include(s => s.Files)
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -58,6 +59,7 @@ public class SubmissionService : ISubmissionService
         try
         {
             var submission = await _context.Submissions
+                .Include(s => s.Files) 
                 .AsNoTracking()
                 .FirstOrDefaultAsync(a => a.Id == id);
 
@@ -163,7 +165,9 @@ public class SubmissionService : ISubmissionService
 
             _context.SubmissionFiles.Add(submissionFile);
 
-            submissionFileResponseList.Add(SubmissionFileConverter.ToSubmissionFileResponse(submissionFile));
+            var submissionFileResponse = SubmissionFileConverter.ToSubmissionFileResponse(submissionFile);
+
+            submissionFileResponseList.Add(submissionFileResponse);
         }
 
         // Save all database records in a single transaction batch

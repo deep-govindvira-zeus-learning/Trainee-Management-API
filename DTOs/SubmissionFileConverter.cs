@@ -44,11 +44,13 @@ public static class SubmissionFileConverter
             Id = submissionFile.Id,
             SubmissionId = submissionFile.SubmissionId,
             OriginalFileName = submissionFile.OriginalFileName,
+            StorageName = submissionFile.StorageName,
             ContentType = submissionFile.ContentType,
             SizeInBytes = submissionFile.SizeInBytes,
             Checksum = submissionFile.Checksum,
             UploadedBy = submissionFile.UploadedBy,
-            CreatedDate = submissionFile.CreatedDate
+            CreatedDate = submissionFile.CreatedDate,
+            UpdatedDate = submissionFile.UpdatedDate,
         };
     }
 

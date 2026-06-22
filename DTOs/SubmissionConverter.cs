@@ -14,6 +14,9 @@ public static class SubmissionConverter
             Notes = submission.Notes,
             Status = submission.Status,
             SubmittedDate = submission.SubmittedDate,
+            Files = submission.Files?
+                .Select(SubmissionFileConverter.ToSubmissionFileResponse)
+                .ToList() ?? new List<SubmissionFileResponse>()
         };
     }
 
