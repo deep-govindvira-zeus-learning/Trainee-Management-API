@@ -51,11 +51,11 @@ CREATE TABLE `Users` (
     `Username` varchar(255) CHARACTER SET utf8mb4 NOT NULL,
     `Email` longtext CHARACTER SET utf8mb4 NOT NULL,
     `PasswordHash` longtext CHARACTER SET utf8mb4 NOT NULL,
-    `Role` longtext CHARACTER SET utf8mb4 NOT NULL,
+    `Role` int NOT NULL,
     `CreatedDate` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     `UpdatedDate` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     CONSTRAINT `PK_Users` PRIMARY KEY (`Id`),
-    CONSTRAINT `CK_User_Role` CHECK (`Role` IN ('Admin', 'Mentor', 'Trainee'))
+    CONSTRAINT `CK_User_Role` CHECK (`Role` IN ('0', '1', '2'))
 ) CHARACTER SET=utf8mb4;
 
 CREATE TABLE `Assignments` (
@@ -102,6 +102,21 @@ CREATE TABLE `Reviews` (
     CONSTRAINT `FK_Reviews_Submissions_SubmissionId` FOREIGN KEY (`SubmissionId`) REFERENCES `Submissions` (`Id`) ON DELETE RESTRICT
 ) CHARACTER SET=utf8mb4;
 
+CREATE TABLE `SubmissionFiles` (
+    `Id` varchar(255) CHARACTER SET utf8mb4 NOT NULL,
+    `SubmissionId` varchar(255) CHARACTER SET utf8mb4 NOT NULL,
+    `OriginalFileName` varchar(255) CHARACTER SET utf8mb4 NOT NULL,
+    `StorageName` longtext CHARACTER SET utf8mb4 NOT NULL,
+    `ContentType` varchar(100) CHARACTER SET utf8mb4 NOT NULL,
+    `SizeInBytes` bigint NOT NULL,
+    `Checksum` varchar(64) CHARACTER SET utf8mb4 NOT NULL,
+    `UploadedBy` varchar(100) CHARACTER SET utf8mb4 NOT NULL,
+    `CreatedDate` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `UpdatedDate` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    CONSTRAINT `PK_SubmissionFiles` PRIMARY KEY (`Id`),
+    CONSTRAINT `FK_SubmissionFiles_Submissions_SubmissionId` FOREIGN KEY (`SubmissionId`) REFERENCES `Submissions` (`Id`) ON DELETE CASCADE
+) CHARACTER SET=utf8mb4;
+
 CREATE INDEX `IX_Assignments_LearningTaskId` ON `Assignments` (`LearningTaskId`);
 
 CREATE INDEX `IX_Assignments_MentorId` ON `Assignments` (`MentorId`);
@@ -112,12 +127,14 @@ CREATE INDEX `IX_Reviews_MentorId` ON `Reviews` (`MentorId`);
 
 CREATE INDEX `IX_Reviews_SubmissionId` ON `Reviews` (`SubmissionId`);
 
+CREATE INDEX `IX_SubmissionFiles_SubmissionId` ON `SubmissionFiles` (`SubmissionId`);
+
 CREATE INDEX `IX_Submissions_AssignmentId` ON `Submissions` (`AssignmentId`);
 
 CREATE UNIQUE INDEX `IX_Users_Username` ON `Users` (`Username`);
 
 INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
-VALUES ('20260618064826_InitialCreate', '9.0.0');
+VALUES ('20260622134037_InitialCreate', '9.0.0');
 
 COMMIT;
 
