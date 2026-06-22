@@ -33,7 +33,11 @@ public class TraineeService : ITraineeService
         string normSearch = (search ?? string.Empty).Trim().ToLowerInvariant();
         string normStatus = (status ?? string.Empty).Trim().ToLowerInvariant();
 
-        string cacheKey = $"trainees:list:s={normSearch}:st={normStatus}:p={validPageNumber}:sz={validPageSize}";
+        // Fetch the current global list version from Redis (Defaults to "1" if missing)
+        string currentVersion = await _cacheService.GetAsync<string>("trainees:list:version") ?? "1";
+
+        // Include the version string directly in your cache key structure
+        string cacheKey = $"trainees:list:v={currentVersion}:s={normSearch}:st={normStatus}:p={validPageNumber}:sz={validPageSize}";
 
         var cachedData = await _cacheService.GetAsync<PagedResponse<TraineeResponse>>(cacheKey);
         if (cachedData != null)
@@ -118,7 +122,7 @@ public class TraineeService : ITraineeService
         }
 
         var response = TraineeConverter.ToTraineeResponse(trainee);
-        
+
         // Populate cache after miss (TTL: 10 minutes)
         await _cacheService.SetAsync(cacheKey, response, TimeSpan.FromMinutes(10));
         return response;
@@ -222,9 +226,13 @@ public class TraineeService : ITraineeService
 
     private async Task InvalidateListCacheAsync()
     {
-        // Evicts list caches. If your ICacheService provides a pattern-matching 
-        // removal using StackExchange.Redis keys scan, use that instead.
-        // Alternatively, use a versioned epoch tag key pattern like 'trainees:list:version'.
-        await _cacheService.RemoveAsync("trainees:list:*");
+        // Get the current version string
+        string currentVersionStr = await _cacheService.GetAsync<string>("trainees:list:version") ?? "1";
+        int.TryParse(currentVersionStr, out int currentVersion);
+
+        // Increment it. The next "GetAllAsync" will instantly look for a brand new key string!
+        string nextVersion = (currentVersion + 1).ToString();
+        await _cacheService.SetAsync("trainees:list:version", nextVersion, TimeSpan.FromDays(1));
     }
+
 }
