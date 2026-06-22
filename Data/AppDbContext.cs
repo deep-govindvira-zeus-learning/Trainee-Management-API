@@ -129,12 +129,10 @@ public class AppDbContext : DbContext
             builder.HasKey(f => f.Id);
 
             builder.Property(f => f.OriginalFileName).IsRequired().HasMaxLength(255);
-            builder.Property(f => f.StorageName).IsRequired().HasMaxLength(100);
             builder.Property(f => f.ContentType).IsRequired().HasMaxLength(100);
             builder.Property(f => f.Checksum).IsRequired().HasMaxLength(64);
             builder.Property(f => f.UploadedBy).IsRequired().HasMaxLength(100);
 
-            builder.HasIndex(f => f.StorageName).IsUnique();
 
             // Configure relation mapping targeting your string key schema
             builder.HasOne(f => f.Submission)

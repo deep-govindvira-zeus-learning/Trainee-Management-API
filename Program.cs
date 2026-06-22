@@ -76,6 +76,8 @@ builder.Services.AddScoped<ILearningTaskService, LearningTaskService>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<ISubmissionService, SubmissionService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<ISubmissionFileService, SubmissionFileService>();
+builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddSingleton<IFileStorageService, LocalFileStorageService>();
 
 builder.Services.AddControllers(options =>
