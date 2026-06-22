@@ -35,13 +35,13 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<User>()
             .Property(u => u.Role)
-            .HasConversion<string>();
+            .HasConversion<int>();
 
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasCheckConstraint(
                 "CK_User_Role",
-                "`Role` IN ('Admin', 'Mentor', 'Trainee')"
+                "`Role` IN ('0', '1', '2')"
             );
         });
 
