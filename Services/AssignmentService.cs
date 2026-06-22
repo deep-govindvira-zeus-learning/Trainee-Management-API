@@ -22,8 +22,6 @@ public class AssignmentService : IAssignmentService
         _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
     }
 
-    // List responses are generally not cached unless using a specific pattern, 
-    // keeping it direct to MySQL source of truth.
     public async Task<List<AssignmentResponse>> GetAllAsync()
     {
         _logger.LogInformation("Fetching all assignments from the database.");
@@ -53,7 +51,6 @@ public class AssignmentService : IAssignmentService
 
         string cacheKey = $"task-assignment:{id}";
 
-        // 1. Safe Cache Try (Task 3.6 & 3.8)
         var cachedResponse = await _cacheService.GetAsync<AssignmentResponse>(cacheKey);
         if (cachedResponse != null)
         {
@@ -77,7 +74,6 @@ public class AssignmentService : IAssignmentService
 
             var response = AssignmentConverter.ToAssignmentResponse(assignment);
 
-            // 2. Safe Cache Populate
             await _cacheService.SetAsync(cacheKey, response, CacheTtl);
 
             return response;
@@ -174,8 +170,6 @@ public class AssignmentService : IAssignmentService
 
             _logger.LogInformation("Successfully updated status for assignment ID: {AssignmentId} in MySQL.", id);
 
-            // 3. Proactive Cache Invalidation (Task 3.7)
-            // Evict old state instantly so stale data cannot be read on the next request.
             string cacheKey = $"task-assignment:{id}";
             await _cacheService.RemoveAsync(cacheKey);
             _logger.LogInformation("Proactively invalidated cache key: {CacheKey}", cacheKey);

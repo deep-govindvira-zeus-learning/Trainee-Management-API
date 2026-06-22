@@ -59,7 +59,6 @@ public class SubmissionService : ISubmissionService
 
             var responseList = SubmissionConverter.ToSubmissionResponseList(submissions);
 
-            // 2. Populate Cache on Miss (Only metadata response summaries, no file blobs)
             await _cacheService.SetAsync(CacheKeyAll, responseList, CacheTtl);
 
             return responseList;
@@ -80,10 +79,8 @@ public class SubmissionService : ISubmissionService
             throw new ArgumentException("Submission ID cannot be null or empty.", nameof(id));
         }
 
-        // Predictable Key Convention: task-3.6 constraint
         string cacheKey = $"submission-summary:{id}";
 
-        // 1. Try Cache Get
         var cachedSubmission = await _cacheService.GetAsync<SubmissionResponse>(cacheKey);
         if (cachedSubmission != null)
         {
@@ -108,7 +105,6 @@ public class SubmissionService : ISubmissionService
 
             var response = SubmissionConverter.ToSubmissionResponse(submission);
 
-            // 2. Populate Cache on Miss
             await _cacheService.SetAsync(cacheKey, response, CacheTtl);
 
             return response;
@@ -146,7 +142,6 @@ public class SubmissionService : ISubmissionService
 
             _logger.LogInformation("Successfully recorded submission with ID: {SubmissionId}", submission.Id);
 
-            // Invalidation Strategy: Clear the parent tracking list so it re-fetches the new entity
             await _cacheService.RemoveAsync(CacheKeyAll);
 
             return SubmissionConverter.ToSubmissionResponse(submission);
@@ -177,8 +172,6 @@ public class SubmissionService : ISubmissionService
 
         _logger.LogInformation("{Count} files successfully mapped for submission {SubmissionId}", files.Count, submissionId);
 
-        // Invalidation Strategy: Evict the individual key and the generic query tracker 
-        // to force subsequent reads to map the newly added files.
         string individualKey = $"submission-summary:{submissionId}";
         await _cacheService.RemoveAsync(individualKey);
         await _cacheService.RemoveAsync(CacheKeyAll);

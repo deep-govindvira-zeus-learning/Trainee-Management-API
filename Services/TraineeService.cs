@@ -103,7 +103,6 @@ public class TraineeService : ITraineeService
             throw new ArgumentException("Trainee ID cannot be null or empty.", nameof(id));
         }
 
-        // ADDED: Task 3.6 Cache-aside for individual entity reads
         string cacheKey = $"trainee:{id}";
         var cachedTrainee = await _cacheService.GetAsync<TraineeResponse>(cacheKey);
         if (cachedTrainee != null)
@@ -123,7 +122,6 @@ public class TraineeService : ITraineeService
 
         var response = TraineeConverter.ToTraineeResponse(trainee);
 
-        // Populate cache after miss (TTL: 10 minutes)
         await _cacheService.SetAsync(cacheKey, response, TimeSpan.FromMinutes(10));
         return response;
     }
@@ -178,7 +176,6 @@ public class TraineeService : ITraineeService
 
             await _context.SaveChangesAsync();
 
-            // ADDED: Task 3.7 Invalidation. Evict individual and clear collections.
             await _cacheService.RemoveAsync($"trainee:{id}");
             await InvalidateListCacheAsync();
 
@@ -210,7 +207,6 @@ public class TraineeService : ITraineeService
             _context.Trainees.Remove(trainee);
             await _context.SaveChangesAsync();
 
-            // ADDED: Task 3.7 Invalidation. Evict individual and clear collections.
             await _cacheService.RemoveAsync($"trainee:{id}");
             await InvalidateListCacheAsync();
 
