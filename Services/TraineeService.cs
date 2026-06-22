@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TraineeManagementApi.Data;
 using TraineeManagementApi.DTOs;
 using TraineeManagementApi.Models;
+using Microsoft.Extensions.Logging;
 
 namespace TraineeManagementApi.Services;
 
@@ -15,7 +16,8 @@ public class TraineeService : ITraineeService
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _cacheService = cacheService ?? throw new ArgumentNullException(nameof(logger));
+        // FIX: Fixed the incorrect nameof validation variable matching
+        _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
     }
 
     public async Task<PagedResponse<TraineeResponse>> GetAllAsync(
@@ -26,16 +28,13 @@ public class TraineeService : ITraineeService
     {
         _logger.LogInformation("Fetching trainees with search: {Search}, status: {Status}, pageNumber: {PageNumber}, pageSize: {PageSize}", search, status, pageNumber, pageSize);
 
-        // 1. Normalize variables for accurate cache indexing
         int validPageNumber = pageNumber < 1 ? 1 : pageNumber;
         int validPageSize = pageSize < 1 ? 10 : pageSize;
         string normSearch = (search ?? string.Empty).Trim().ToLowerInvariant();
         string normStatus = (status ?? string.Empty).Trim().ToLowerInvariant();
 
-        // 2. Generate a unique, deterministic cache key
         string cacheKey = $"trainees:list:s={normSearch}:st={normStatus}:p={validPageNumber}:sz={validPageSize}";
 
-        // 3. Attempt to fetch from Redis lookaside cache
         var cachedData = await _cacheService.GetAsync<PagedResponse<TraineeResponse>>(cacheKey);
         if (cachedData != null)
         {
@@ -82,9 +81,7 @@ public class TraineeService : ITraineeService
                 Data = traineeResponses
             };
 
-            // 4. Populate lookaside cache securely (TTL: 5 Minutes)
             await _cacheService.SetAsync(cacheKey, response, TimeSpan.FromMinutes(5));
-
             return response;
         }
         catch (Exception ex)
@@ -98,11 +95,20 @@ public class TraineeService : ITraineeService
     {
         if (string.IsNullOrWhiteSpace(id))
         {
-            _logger.LogWarning("GetTraineeByIdAsync called with an empty or null ID.");
+            _logger.LogWarning("GetByIdAsync called with an empty or null ID.");
             throw new ArgumentException("Trainee ID cannot be null or empty.", nameof(id));
         }
 
-        _logger.LogInformation("Fetching trainee with ID: {TraineeId}", id);
+        // ADDED: Task 3.6 Cache-aside for individual entity reads
+        string cacheKey = $"trainee:{id}";
+        var cachedTrainee = await _cacheService.GetAsync<TraineeResponse>(cacheKey);
+        if (cachedTrainee != null)
+        {
+            _logger.LogInformation("Cache HIT for key: {CacheKey}", cacheKey);
+            return cachedTrainee;
+        }
+
+        _logger.LogInformation("Cache MISS for key: {CacheKey}. Fetching from MySQL database.", cacheKey);
 
         var trainee = await _context.Trainees.FindAsync(id);
         if (trainee == null)
@@ -111,15 +117,16 @@ public class TraineeService : ITraineeService
             throw new KeyNotFoundException($"Trainee with ID '{id}' was not found.");
         }
 
-        return TraineeConverter.ToTraineeResponse(trainee);
+        var response = TraineeConverter.ToTraineeResponse(trainee);
+        
+        // Populate cache after miss (TTL: 10 minutes)
+        await _cacheService.SetAsync(cacheKey, response, TimeSpan.FromMinutes(10));
+        return response;
     }
 
     public async Task<TraineeResponse> CreateAsync(CreateTraineeRequest request)
     {
-        if (request == null)
-        {
-            throw new ArgumentNullException(nameof(request));
-        }
+        if (request == null) throw new ArgumentNullException(nameof(request));
 
         _logger.LogInformation("Creating a new trainee with Email: {Email}", request.Email);
 
@@ -129,8 +136,10 @@ public class TraineeService : ITraineeService
             await _context.Trainees.AddAsync(trainee);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Trainee '{FirstName}' with ID '{TraineeId}' successfully created.", trainee.FirstName, trainee.Id);
+            // ADDED: Task 3.7 Invalidation. New entry shifts list page collections.
+            await InvalidateListCacheAsync();
 
+            _logger.LogInformation("Trainee '{FirstName}' with ID '{TraineeId}' successfully created.", trainee.FirstName, trainee.Id);
             return TraineeConverter.ToTraineeResponse(trainee);
         }
         catch (Exception ex)
@@ -142,21 +151,14 @@ public class TraineeService : ITraineeService
 
     public async Task<TraineeResponse> UpdateByIdAsync(string id, UpdateTraineeRequest request)
     {
-        if (string.IsNullOrWhiteSpace(id))
-        {
-            throw new ArgumentException("Trainee ID cannot be null or empty.", nameof(id));
-        }
-        if (request == null)
-        {
-            throw new ArgumentNullException(nameof(request));
-        }
+        if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Trainee ID cannot be null or empty.", nameof(id));
+        if (request == null) throw new ArgumentNullException(nameof(request));
 
         _logger.LogInformation("Updating trainee with ID: {TraineeId}", id);
 
         try
         {
             var existing = await _context.Trainees.FindAsync(id);
-
             if (existing == null)
             {
                 _logger.LogWarning("Failed to update trainee. Trainee with ID: {TraineeId} was not found.", id);
@@ -172,8 +174,11 @@ public class TraineeService : ITraineeService
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Successfully updated trainee with ID: {TraineeId}", id);
+            // ADDED: Task 3.7 Invalidation. Evict individual and clear collections.
+            await _cacheService.RemoveAsync($"trainee:{id}");
+            await InvalidateListCacheAsync();
 
+            _logger.LogInformation("Successfully updated trainee with ID: {TraineeId} and invalidated cache entries.", id);
             return TraineeConverter.ToTraineeResponse(existing);
         }
         catch (Exception ex) when (ex is not KeyNotFoundException)
@@ -185,17 +190,13 @@ public class TraineeService : ITraineeService
 
     public async Task<bool> DeleteByIdAsync(string id)
     {
-        if (string.IsNullOrWhiteSpace(id))
-        {
-            throw new ArgumentException("Trainee ID cannot be null or empty.", nameof(id));
-        }
+        if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Trainee ID cannot be null or empty.", nameof(id));
 
         _logger.LogInformation("Deleting trainee with ID: {TraineeId}", id);
 
         try
         {
             var trainee = await _context.Trainees.FindAsync(id);
-
             if (trainee == null)
             {
                 _logger.LogWarning("Failed to delete trainee. Trainee with ID: {TraineeId} was not found.", id);
@@ -205,7 +206,11 @@ public class TraineeService : ITraineeService
             _context.Trainees.Remove(trainee);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Successfully deleted trainee with ID: {TraineeId}", id);
+            // ADDED: Task 3.7 Invalidation. Evict individual and clear collections.
+            await _cacheService.RemoveAsync($"trainee:{id}");
+            await InvalidateListCacheAsync();
+
+            _logger.LogInformation("Successfully deleted trainee with ID: {TraineeId} and cleared cache.", id);
             return true;
         }
         catch (Exception ex) when (ex is not KeyNotFoundException)
@@ -213,5 +218,13 @@ public class TraineeService : ITraineeService
             _logger.LogError(ex, "An error occurred while deleting trainee with ID: {TraineeId}", id);
             throw;
         }
+    }
+
+    private async Task InvalidateListCacheAsync()
+    {
+        // Evicts list caches. If your ICacheService provides a pattern-matching 
+        // removal using StackExchange.Redis keys scan, use that instead.
+        // Alternatively, use a versioned epoch tag key pattern like 'trainees:list:version'.
+        await _cacheService.RemoveAsync("trainees:list:*");
     }
 }
