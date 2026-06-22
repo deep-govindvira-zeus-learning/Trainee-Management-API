@@ -8,12 +8,14 @@ namespace TraineeManagementApi.Services;
 public class TraineeService : ITraineeService
 {
     private readonly AppDbContext _context;
+    private readonly ICacheService _cacheService;
     private readonly ILogger<TraineeService> _logger;
 
-    public TraineeService(AppDbContext context, ILogger<TraineeService> logger)
+    public TraineeService(AppDbContext context, ILogger<TraineeService> logger, ICacheService cacheService)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _cacheService = cacheService ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<PagedResponse<TraineeResponse>> GetAllAsync(
@@ -23,6 +25,25 @@ public class TraineeService : ITraineeService
         int pageSize)
     {
         _logger.LogInformation("Fetching trainees with search: {Search}, status: {Status}, pageNumber: {PageNumber}, pageSize: {PageSize}", search, status, pageNumber, pageSize);
+
+        // 1. Normalize variables for accurate cache indexing
+        int validPageNumber = pageNumber < 1 ? 1 : pageNumber;
+        int validPageSize = pageSize < 1 ? 10 : pageSize;
+        string normSearch = (search ?? string.Empty).Trim().ToLowerInvariant();
+        string normStatus = (status ?? string.Empty).Trim().ToLowerInvariant();
+
+        // 2. Generate a unique, deterministic cache key
+        string cacheKey = $"trainees:list:s={normSearch}:st={normStatus}:p={validPageNumber}:sz={validPageSize}";
+
+        // 3. Attempt to fetch from Redis lookaside cache
+        var cachedData = await _cacheService.GetAsync<PagedResponse<TraineeResponse>>(cacheKey);
+        if (cachedData != null)
+        {
+            _logger.LogInformation("Cache HIT for key: {CacheKey}", cacheKey);
+            return cachedData;
+        }
+
+        _logger.LogInformation("Cache MISS for key: {CacheKey}. Fetching from MySQL database.", cacheKey);
 
         try
         {
@@ -45,9 +66,6 @@ public class TraineeService : ITraineeService
 
             int totalRecords = await query.CountAsync();
 
-            int validPageNumber = pageNumber < 1 ? 1 : pageNumber;
-            int validPageSize = pageSize < 1 ? 10 : pageSize;
-
             var trainees = await query
                 .OrderBy(t => t.Id)
                 .Skip((validPageNumber - 1) * validPageSize)
@@ -56,17 +74,22 @@ public class TraineeService : ITraineeService
 
             var traineeResponses = TraineeConverter.ToTraineeResponseList(trainees);
 
-            return new PagedResponse<TraineeResponse>
+            var response = new PagedResponse<TraineeResponse>
             {
                 PageNumber = validPageNumber,
                 PageSize = validPageSize,
                 TotalRecords = totalRecords,
                 Data = traineeResponses
             };
+
+            // 4. Populate lookaside cache securely (TTL: 5 Minutes)
+            await _cacheService.SetAsync(cacheKey, response, TimeSpan.FromMinutes(5));
+
+            return response;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occurred while fetching the paginated list of trainees.");
+            _logger.LogError(ex, "An error occurred while fetching the paginated list of trainees from MySQL.");
             throw;
         }
     }

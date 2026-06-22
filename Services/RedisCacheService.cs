@@ -1,13 +1,6 @@
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
-
-public interface ICacheService
-{
-    Task<T?> GetAsync<T>(string key);
-    Task SetAsync<T>(string key, T value, TimeSpan expiration);
-    Task RemoveAsync(string key);
-}
+using TraineeManagementApi.Services;
 
 public class RedisCacheService : ICacheService
 {
