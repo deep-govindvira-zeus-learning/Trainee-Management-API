@@ -42,11 +42,8 @@ public class TraineeService : ITraineeService
         var cachedData = await _cacheService.GetAsync<PagedResponse<TraineeResponse>>(cacheKey);
         if (cachedData != null)
         {
-            _logger.LogInformation("Cache HIT for key: {CacheKey}", cacheKey);
             return cachedData;
         }
-
-        _logger.LogInformation("Cache MISS for key: {CacheKey}. Fetching from MySQL database.", cacheKey);
 
         try
         {
@@ -107,11 +104,9 @@ public class TraineeService : ITraineeService
         var cachedTrainee = await _cacheService.GetAsync<TraineeResponse>(cacheKey);
         if (cachedTrainee != null)
         {
-            _logger.LogInformation("Cache HIT for key: {CacheKey}", cacheKey);
             return cachedTrainee;
         }
 
-        _logger.LogInformation("Cache MISS for key: {CacheKey}. Fetching from MySQL database.", cacheKey);
 
         var trainee = await _context.Trainees.FindAsync(id);
         if (trainee == null)

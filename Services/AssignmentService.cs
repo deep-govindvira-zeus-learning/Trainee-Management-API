@@ -54,11 +54,8 @@ public class AssignmentService : IAssignmentService
         var cachedResponse = await _cacheService.GetAsync<AssignmentResponse>(cacheKey);
         if (cachedResponse != null)
         {
-            _logger.LogInformation("Cache HIT for assignment ID: {AssignmentId}", id);
             return cachedResponse;
         }
-
-        _logger.LogInformation("Cache MISS. Fetching assignment with ID: {AssignmentId} from MySQL.", id);
 
         try
         {

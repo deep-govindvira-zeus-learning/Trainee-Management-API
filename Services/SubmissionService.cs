@@ -44,11 +44,9 @@ public class SubmissionService : ISubmissionService
         var cachedList = await _cacheService.GetAsync<List<SubmissionResponse>>(CacheKeyAll);
         if (cachedList != null)
         {
-            _logger.LogInformation("Cache HIT for key: {Key}", CacheKeyAll);
             return cachedList;
         }
 
-        _logger.LogInformation("Cache MISS for key: {Key}. Fetching from MySQL.", CacheKeyAll);
 
         try
         {
@@ -84,11 +82,9 @@ public class SubmissionService : ISubmissionService
         var cachedSubmission = await _cacheService.GetAsync<SubmissionResponse>(cacheKey);
         if (cachedSubmission != null)
         {
-            _logger.LogInformation("Cache HIT for key: {Key}", cacheKey);
             return cachedSubmission;
         }
 
-        _logger.LogInformation("Cache MISS for key: {Key}. Fetching from MySQL.", cacheKey);
 
         try
         {

@@ -18,8 +18,12 @@ public class RedisCacheService : ICacheService
         try
         {
             var cachedData = await _cache.GetStringAsync(key);
-            if (string.IsNullOrEmpty(cachedData)) return default;
+            if (string.IsNullOrEmpty(cachedData)) {
+                _logger.LogInformation("Cache MISS for key: {Key}", key);
+                return default;
+            }
 
+            _logger.LogInformation("Cache HIT for key: {Key}", key);
             return JsonSerializer.Deserialize<T>(cachedData);
         }
         catch (Exception ex)
@@ -40,6 +44,7 @@ public class RedisCacheService : ICacheService
             };
             var serializedData = JsonSerializer.Serialize(value);
             await _cache.SetStringAsync(key, serializedData, options);
+            _logger.LogInformation("Cache SET for key: {Key} with expiration: {Expiration}", key, expiration);
         }
         catch (Exception ex)
         {
@@ -53,6 +58,7 @@ public class RedisCacheService : ICacheService
         try
         {
             await _cache.RemoveAsync(key);
+            _logger.LogInformation("Cache REMOVE for key: {Key}", key);
         }
         catch (Exception ex)
         {
