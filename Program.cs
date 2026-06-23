@@ -85,6 +85,8 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ISubmissionFileService, SubmissionFileService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+builder.Services.AddScoped<ISubmissionPublisher, RabbitMqSubmissionPublisher>(); 
+
 
 builder.Services.AddControllers(options =>
 {

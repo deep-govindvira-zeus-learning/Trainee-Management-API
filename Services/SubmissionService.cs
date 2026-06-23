@@ -9,28 +9,31 @@ using TraineeManagementApi.Services;
 public class SubmissionService : ISubmissionService
 {
     private readonly AppDbContext _context;
+    private readonly ISubmissionPublisher _submissionPublisher;
     private readonly ILogger<SubmissionService> _logger;
     private readonly IFileStorageService _fileStorageService;
     private readonly ICacheService _cacheService; // Added for distributed caching
 
     private readonly long _maxFileSize;
     private readonly string[] _allowedExtensions;
-    
+
     private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(10);
     private const string CacheKeyAll = "submission-summary:all";
 
     public SubmissionService(
-        AppDbContext context, 
-        ILogger<SubmissionService> logger, 
-        IFileStorageService fileStorageService, 
+        AppDbContext context,
+        ISubmissionPublisher submissionPublisher,
+        ILogger<SubmissionService> logger,
+        IFileStorageService fileStorageService,
         IConfiguration configuration,
         ICacheService cacheService) // Injected cache service
     {
         _context = context;
+        _submissionPublisher = submissionPublisher;
         _logger = logger;
         _fileStorageService = fileStorageService;
         _cacheService = cacheService;
-        _maxFileSize = configuration.GetValue<long>("FileStorage:MaxSizeBytes", 10485760); 
+        _maxFileSize = configuration.GetValue<long>("FileStorage:MaxSizeBytes", 10485760);
         _allowedExtensions = configuration.GetSection("FileStorage:AllowedExtensions").Get<string[]>()
                              ?? new[] { ".pdf", ".docx", ".zip" };
     }
@@ -46,7 +49,6 @@ public class SubmissionService : ISubmissionService
         {
             return cachedList;
         }
-
 
         try
         {
@@ -89,7 +91,7 @@ public class SubmissionService : ISubmissionService
         try
         {
             var submission = await _context.Submissions
-                .Include(s => s.Files) 
+                .Include(s => s.Files)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(a => a.Id == id);
 
@@ -162,6 +164,9 @@ public class SubmissionService : ISubmissionService
 
             var submissionFileResponse = SubmissionFileConverter.ToSubmissionFileResponse(submissionFile);
             submissionFileResponseList.Add(submissionFileResponse);
+
+            bool isQueued = await _submissionPublisher.Publish(SubmissionProcessingRequestedConverter.ToSubmissionProcessingRequested(submissionFileResponse));
+            
         }
 
         await _context.SaveChangesAsync(); // State committed to source of truth
