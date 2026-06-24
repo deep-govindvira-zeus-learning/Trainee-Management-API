@@ -10,6 +10,7 @@ using TraineeManagementApi.Data;
 using TraineeManagementApi.Helper;
 using TraineeManagementApi.Middleware;
 using TraineeManagementApi.Models;
+using TraineeManagementApi.Repositories;
 using TraineeManagementApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -86,6 +87,10 @@ builder.Services.AddScoped<ISubmissionFileService, SubmissionFileService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddSingleton<ICacheService, RedisCacheService>();
 builder.Services.AddScoped<ISubmissionPublisher, RabbitMqSubmissionPublisher>(); 
+
+builder.Services.AddScoped<IProcessingJobRepository, ProcessingJobRepository>();
+builder.Services.AddScoped<IProcessingJobService, ProcessingJobService>();
+
 
 
 builder.Services.AddControllers(options =>

@@ -1,44 +1,26 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using TraineeManagementApi.Data;
 using TraineeManagementApi.DTOs;
+using TraineeManagementApi.Services;
 
 namespace TraineeManagementApi.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/processing-jobs")]
 public class ProcessingJobsController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly IProcessingJobService _jobService;
 
-    public ProcessingJobsController(AppDbContext context)
+    public ProcessingJobsController(IProcessingJobService jobService)
     {
-        _context = context;
+        _jobService = jobService;
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<JobStatusResponse>> GetJobStatus(Guid id)
+    public async Task<ActionResult<ProcessingJobResponse>> GetByIdAsync(Guid id)
     {
-        var job = await _context.ProcessingJobs.AsNoTracking().FirstOrDefaultAsync(j => j.Id == id);
-
-        if (job == null)
-        {
-            return NotFound(new { Message = $"Job with ID '{id}' was not found." });
-        }
-
-        return Ok(new JobStatusResponse(
-            job.Id,
-            job.SubmissionId,
-            job.FileId,
-            job.MessageId,
-            job.CorrelationId,
-            job.Status.ToString(),
-            job.Attempts,
-            job.ErrorSummary,
-            job.GeneratedChecksum,
-            job.RequestedAt,
-            job.StartedAt,
-            job.CompletedAt
-        ));
+        var response = await _jobService.GetByIdAsync(id);
+        return Ok(response);
     }
 }
