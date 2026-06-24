@@ -109,14 +109,15 @@ public class RabbitMqSubmissionPublisher : ISubmissionPublisher, IAsyncDisposabl
                 CorrelationId = message.CorrelationId.ToString()
             };
 
-            // 4. Publish via the modern RabbitMQ.Client v7+ Async API
+            // Publish through your central exchange routing key
             await channel.BasicPublishAsync(
-                exchange: string.Empty,
-                routingKey: _queueName,
+                exchange: "submission.main.exchange",
+                routingKey: "submission.process.key",
                 mandatory: false,
                 basicProperties: properties,
                 body: body
             );
+
 
             _logger.LogInformation("Successfully published message to RabbitMQ. MsgId: {MessageId}, CorrelationId: {CorrelationId}",
                 message.MessageId, message.CorrelationId);
