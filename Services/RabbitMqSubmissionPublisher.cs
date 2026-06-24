@@ -1,5 +1,7 @@
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using TraineeManagementApi.DTOs;
 
@@ -8,85 +10,110 @@ public interface ISubmissionPublisher
     Task<bool> Publish(SubmissionProcessingRequested message);
 }
 
-public class RabbitMqSubmissionPublisher : ISubmissionPublisher
+public class RabbitMqSubmissionPublisher : ISubmissionPublisher, IAsyncDisposable
 {
     private readonly ILogger<RabbitMqSubmissionPublisher> _logger;
-    private IConnection? _connection;
-    private RabbitMQ.Client.IChannel? _channel;
-    private readonly string _queueName;
     private readonly IConfiguration _configuration;
+    private readonly string _queueName;
+
+    private IConnection? _connection;
+    private readonly SemaphoreSlim _connectionLock = new(1, 1);
 
     public RabbitMqSubmissionPublisher(ILogger<RabbitMqSubmissionPublisher> logger, IConfiguration configuration)
     {
         _logger = logger;
-        _queueName = configuration["RabbitMq:QueueName"] ?? "submission-processing";
         _configuration = configuration;
-        InitializeRabbitMq();
+        _queueName = configuration["RabbitMq:QueueName"] ?? "submission-processing";
+        // REMOVED: Do not call async methods in constructor. Let it initialize lazily on demand.
     }
 
-    private async Task InitializeRabbitMq()
+    /// <summary>
+    /// Thread-safe, asynchronous connection initializer. Guaranteed to run completely before any message is published.
+    /// </summary>
+    private async Task<IConnection> GetConnectionAsync()
     {
+        if (_connection != null && _connection.IsOpen)
+        {
+            return _connection;
+        }
+
+        await _connectionLock.WaitAsync();
         try
         {
+            // Double-check pattern after acquiring lock
+            if (_connection != null && _connection.IsOpen)
+            {
+                return _connection;
+            }
+
             var factory = new ConnectionFactory
             {
                 HostName = _configuration["RabbitMq:Host"] ?? "localhost",
-
-                // Convert the string to an int, defaulting to 5672 if missing or invalid
                 Port = int.TryParse(_configuration["RabbitMq:Port"], out var port) ? port : 5672,
-
                 UserName = _configuration["RabbitMq:Username"] ?? "guest",
                 Password = _configuration["RabbitMq:Password"] ?? "guest",
-                VirtualHost = _configuration["RabbitMq:VirtualHost"] ?? "/"
+                VirtualHost = _configuration["RabbitMq:VirtualHost"] ?? "/",
+                AutomaticRecoveryEnabled = true, // Essential for handling dropped server connections
+                NetworkRecoveryInterval = TimeSpan.FromSeconds(10)
             };
 
-
+            _logger.LogInformation("Publisher establishing connection to RabbitMQ broker...");
             _connection = await factory.CreateConnectionAsync();
-            _channel = await _connection.CreateChannelAsync();
-
-            // Declare a durable queue
-            await _channel.QueueDeclareAsync(
-                queue: _queueName,
-                durable: true,
-                exclusive: false,
-                autoDelete: false,
-                arguments: null
-            );
+            return _connection;
         }
         catch (Exception ex)
         {
             _logger.LogCritical(ex, "Could not initialize connection to RabbitMQ.");
+            throw;
+        }
+        finally
+        {
+            _connectionLock.Release();
         }
     }
 
     public async Task<bool> Publish(SubmissionProcessingRequested message)
     {
-        if (_channel == null || _channel.IsOpen == false)
-        {
-            _logger.LogError("RabbitMQ channel is unavailable. Cannot publish MessageId: {MessageId}", message.MessageId);
-            return false;
-        }
-
         try
         {
+            // 1. Ensure connection is up and fully awaited
+            var connection = await GetConnectionAsync();
+
+            // 2. Open a transient channel scoped entirely to this specific message delivery
+            await using var channel = await connection.CreateChannelAsync();
+
+            var queueArgs = new Dictionary<string, object?>
+            {
+                { "x-dead-letter-exchange", "submission.retry.exchange" },
+                { "x-dead-letter-routing-key", "submission.retry.key" }
+            };
+
+
+            // 3. Declare topology safely to ensure queue existence
+            await channel.QueueDeclareAsync(
+                queue: _queueName,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: queueArgs
+            );
+
             var json = JsonSerializer.Serialize(message);
             var body = Encoding.UTF8.GetBytes(json);
 
             var properties = new BasicProperties
             {
-                Persistent = true, // Replaces DeliveryMode = 2
+                Persistent = true, // Survives RabbitMQ server crashes/restarts
                 ContentType = "application/json",
-                CorrelationId = Guid.NewGuid().ToString()
+                MessageId = message.MessageId.ToString(),
+                CorrelationId = message.CorrelationId.ToString()
             };
 
-            properties.Persistent = true; // Message survives broker restart
-            properties.MessageId = message.MessageId.ToString();
-            properties.CorrelationId = message.CorrelationId.ToString();
-
-            await _channel.BasicPublishAsync(
-                exchange: string.Empty, // Default exchange
+            // 4. Publish via the modern RabbitMQ.Client v7+ Async API
+            await channel.BasicPublishAsync(
+                exchange: string.Empty,
                 routingKey: _queueName,
-                mandatory: false, // You must include this boolean argument
+                mandatory: false,
                 basicProperties: properties,
                 body: body
             );
@@ -103,9 +130,22 @@ public class RabbitMqSubmissionPublisher : ISubmissionPublisher
         }
     }
 
-    public async Task Dispose()
+    public async ValueTask DisposeAsync()
     {
-        await _channel?.CloseAsync();
-        await _connection?.CloseAsync();
+        try
+        {
+            if (_connection != null)
+            {
+                await _connection.CloseAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error closing connection during publisher disposal.");
+        }
+        finally
+        {
+            _connectionLock.Dispose();
+        }
     }
 }

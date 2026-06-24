@@ -20,10 +20,20 @@ public class AppDbContext : DbContext
     public DbSet<Review> Reviews { get; set; }
     public DbSet<SubmissionFile> SubmissionFiles { get; set; }
 
+    public DbSet<ProcessingJob> ProcessingJobs { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<ProcessingJob>()
+            .HasIndex(j => j.MessageId)
+            .IsUnique();
+            
+        modelBuilder.Entity<ProcessingJob>()
+            .HasIndex(j => j.FileId);
+
 
         modelBuilder.Entity<Trainee>(entity =>
         {
