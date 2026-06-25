@@ -18,11 +18,16 @@ public class TraineeProfileController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetTraineeProfile(string id, CancellationToken cancellationToken)
     {
-        // Capture incoming correlation ID from Postman for logging verification
+        // 1. Capture incoming correlation ID from Postman
         var correlationId = HttpContext.Request.Headers["X-Correlation-ID"].ToString();
+
         if (string.IsNullOrEmpty(correlationId))
         {
             correlationId = Guid.NewGuid().ToString();
+
+            // CRITICAL FIX: Push the newly generated ID back into the Request Headers 
+            // so that CorrelationIdManualPropagationHandler can pick up this EXACT same ID!
+            HttpContext.Request.Headers["X-Correlation-ID"] = correlationId;
         }
 
         _logger.LogInformation("[Gateway] Received request for Trainee {Id} with Correlation ID: {CorrelationId}", id, correlationId);
@@ -37,7 +42,7 @@ public class TraineeProfileController : ControllerBase
         }
 
         _logger.LogInformation("[Gateway] Successfully processed request for Trainee {Id}.", id);
-        
+
         return Ok(profile);
     }
 }

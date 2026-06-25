@@ -14,27 +14,30 @@ using TraineeManagementApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        // This converts all enums to strings automatically in your JSON API
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
+// --- 1. Controller & JSON Setup ---
+builder.Services.AddControllers(options =>
+{
+    options.SuppressAsyncSuffixInActionNames = false;
+})
+.AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
+// --- 2. Caching & Logging ---
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration.GetValue<string>("Redis:ConnectionString");
     options.InstanceName = "TrainingPlatform_";
 });
 
-
 builder.Services.AddSerilog((services, lc) => lc.ReadFrom.Configuration(builder.Configuration));
 
 var logPath = Path.Combine(Directory.GetCurrentDirectory(), "Logs/app_logs.txt");
 builder.Logging.AddProvider(new CustomFileLoggerProvider(logPath));
 
+// --- 3. CORS Policy ---
 const string ReactCorsPolicy = "_reactDevelopmentCors";
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: ReactCorsPolicy,
@@ -48,35 +51,26 @@ builder.Services.AddCors(options =>
         });
 });
 
-
-// Add services to the container.
-
-builder.Services.AddControllers();
-
-// Register Problem Details and the Global Exception Handler
+// --- 4. Global Exception & Validation Setup ---
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-
 builder.Services.AddValidation();
 
+// --- InMemory DB ---
 // builder.Services.AddDbContext<AppDbContext>(options =>
 // {
 //     options.UseInMemoryDatabase("TraineeManagementDb");
 // });
 
-// db connection
+// --- 5. Database Setup ---
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
 
-
-builder.Services.AddHttpContextAccessor();
-
+// --- 6. Core Application Dependencies ---
+builder.Services.AddHttpContextAccessor(); // REQUIRED for header extraction
 builder.Services.AddScoped<ITraineeService, TraineeService>();
 builder.Services.AddScoped<IMentorService, MentorService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -90,13 +84,7 @@ builder.Services.AddSingleton<ICacheService, RedisCacheService>();
 builder.Services.AddScoped<ISubmissionPublisher, RabbitMqSubmissionPublisher>(); 
 builder.Services.AddScoped<IProcessingJobService, ProcessingJobService>();
 
-
-builder.Services.AddControllers(options =>
-{
-    options.SuppressAsyncSuffixInActionNames = false;
-});
-
-
+// --- 7. Authentication Setup ---
 var jwt = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwt["key"]!);
 
@@ -104,8 +92,7 @@ builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.TokenValidationParameters =
-        new TokenValidationParameters
+        options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidateAudience = true,
@@ -117,69 +104,56 @@ builder.Services
         };
     });
 
-// Inside Main Program (Port 5093) -> Program.cs
+// --- 8. Manual Correlation ID Handler Registration ---
+builder.Services.AddTransient<CorrelationIdManualPropagationHandler>();
 
+// --- 9. Resilient HTTP Client Setup ---
 builder.Services.AddHttpClient<ITrainingDirectoryClient, TrainingDirectoryClient>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:5138"); // Point to your internal mini-service
+    client.BaseAddress = new Uri("http://localhost:5138"); 
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 })
+.AddHttpMessageHandler<CorrelationIdManualPropagationHandler>() // Force manual forwarder
 .AddStandardResilienceHandler(options =>
 {
-    // 1. Total Request Timeout (Must be greater than Attempt Timeout)
     options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(15);
-
-    // 2. Individual Attempt Timeout (Explicitly forces it down from the 10s default)
     options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(3);
-
-    // 3. Retry Policy
     options.Retry.MaxRetryAttempts = 3;
     options.Retry.BackoffType = DelayBackoffType.Exponential;
     options.Retry.UseJitter = true;
     options.Retry.Delay = TimeSpan.FromSeconds(1);
-
-    // 4. Circuit Breaker Policy (SamplingDuration must be >= 2 * AttemptTimeout)
     options.CircuitBreaker.FailureRatio = 0.5;
-    options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(10); // 10s is safely >= 2 * 3s
+    options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(10); 
     options.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(30);
 });
 
-
+// ========================================================
+// HTTP PIPELINE BUILD
+// ========================================================
 var app = builder.Build();
 
+// Seed Database Context
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
     DbInitializer.Seed(context);
 }
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-
     app.UseSwaggerUi(options =>
     {
         options.DocumentPath = "/openapi/v1.json";
     });
-
 }
 
-
-// This intercepts and logs every HTTP request to the console automatically
 app.UseSerilogRequestLogging(); 
-
 app.UseExceptionHandler();
-
 app.UseRouting();
-
 app.UseCors(ReactCorsPolicy);
-
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
