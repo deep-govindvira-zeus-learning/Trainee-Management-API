@@ -14,7 +14,7 @@ using TraineeManagementApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- 1. Controller & JSON Setup ---
+// --- Controller & JSON Setup ---
 builder.Services.AddControllers(options =>
 {
     options.SuppressAsyncSuffixInActionNames = false;
@@ -24,7 +24,7 @@ builder.Services.AddControllers(options =>
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
-// --- 2. Caching & Logging ---
+// --- Caching & Logging ---
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration.GetValue<string>("Redis:ConnectionString");
@@ -36,7 +36,7 @@ builder.Services.AddSerilog((services, lc) => lc.ReadFrom.Configuration(builder.
 var logPath = Path.Combine(Directory.GetCurrentDirectory(), "Logs/app_logs.txt");
 builder.Logging.AddProvider(new CustomFileLoggerProvider(logPath));
 
-// --- 3. CORS Policy ---
+// --- CORS Policy ---
 const string ReactCorsPolicy = "_reactDevelopmentCors";
 builder.Services.AddCors(options =>
 {
@@ -51,7 +51,7 @@ builder.Services.AddCors(options =>
         });
 });
 
-// --- 4. Global Exception & Validation Setup ---
+// --- Global Exception & Validation Setup ---
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddOpenApi();
@@ -63,13 +63,13 @@ builder.Services.AddValidation();
 //     options.UseInMemoryDatabase("TraineeManagementDb");
 // });
 
-// --- 5. Database Setup ---
+// --- Database Setup ---
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
 
-// --- 6. Core Application Dependencies ---
+// --- Core Application Dependencies ---
 builder.Services.AddHttpContextAccessor(); // REQUIRED for header extraction
 builder.Services.AddScoped<ITraineeService, TraineeService>();
 builder.Services.AddScoped<IMentorService, MentorService>();
@@ -84,7 +84,7 @@ builder.Services.AddSingleton<ICacheService, RedisCacheService>();
 builder.Services.AddScoped<ISubmissionPublisher, RabbitMqSubmissionPublisher>(); 
 builder.Services.AddScoped<IProcessingJobService, ProcessingJobService>();
 
-// --- 7. Authentication Setup ---
+// --- Authentication Setup ---
 var jwt = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwt["key"]!);
 
@@ -104,10 +104,10 @@ builder.Services
         };
     });
 
-// --- 8. Manual Correlation ID Handler Registration ---
+// --- Manual Correlation ID Handler Registration ---
 builder.Services.AddTransient<CorrelationIdManualPropagationHandler>();
 
-// --- 9. Resilient HTTP Client Setup ---
+// --- Resilient HTTP Client Setup ---
 builder.Services.AddHttpClient<ITrainingDirectoryClient, TrainingDirectoryClient>(client =>
 {
     client.BaseAddress = new Uri("http://localhost:5138"); 
