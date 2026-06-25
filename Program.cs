@@ -5,6 +5,7 @@ using Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Polly;
 using Serilog;
 using TraineeManagementApi.Data;
 using TraineeManagementApi.Helper;
@@ -74,6 +75,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 );
 
 
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddScoped<ITraineeService, TraineeService>();
 builder.Services.AddScoped<IMentorService, MentorService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -113,6 +116,34 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(key)
         };
     });
+
+// Inside Main Program (Port 5093) -> Program.cs
+
+builder.Services.AddHttpClient<ITrainingDirectoryClient, TrainingDirectoryClient>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:5138"); // Point to your internal mini-service
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+})
+.AddStandardResilienceHandler(options =>
+{
+    // 1. Total Request Timeout (Must be greater than Attempt Timeout)
+    options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(15);
+
+    // 2. Individual Attempt Timeout (Explicitly forces it down from the 10s default)
+    options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(3);
+
+    // 3. Retry Policy
+    options.Retry.MaxRetryAttempts = 3;
+    options.Retry.BackoffType = DelayBackoffType.Exponential;
+    options.Retry.UseJitter = true;
+    options.Retry.Delay = TimeSpan.FromSeconds(1);
+
+    // 4. Circuit Breaker Policy (SamplingDuration must be >= 2 * AttemptTimeout)
+    options.CircuitBreaker.FailureRatio = 0.5;
+    options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(10); // 10s is safely >= 2 * 3s
+    options.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(30);
+});
+
 
 var app = builder.Build();
 
