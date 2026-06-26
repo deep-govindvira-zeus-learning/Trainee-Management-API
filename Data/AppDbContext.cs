@@ -22,10 +22,39 @@ public class AppDbContext : DbContext
 
     public DbSet<ProcessingJob> ProcessingJobs { get; set; }
 
+    public DbSet<UserRoleLookup> UserRoles { get; set; } 
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<UserRoleLookup>(entity =>
+        {
+            entity.Property(e => e.Id).HasConversion<int>();
+            
+            entity.HasData(
+                new UserRoleLookup { Id = UserRole.Admin, Name = nameof(UserRole.Admin) },
+                new UserRoleLookup { Id = UserRole.Mentor, Name = nameof(UserRole.Mentor) },
+                new UserRoleLookup { Id = UserRole.Trainee, Name = nameof(UserRole.Trainee) }
+            );
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.Property(e => e.Role).HasConversion<int>();
+
+            entity.HasOne<UserRoleLookup>()
+                  .WithMany()
+                  .HasForeignKey(e => e.Role)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+
+            entity.Property(e => e.UpdatedDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)");
+        });
 
         modelBuilder.Entity<ProcessingJob>()
             .HasIndex(j => j.MessageId)
