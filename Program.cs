@@ -1,11 +1,15 @@
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Core.Interfaces;
 using Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Connections;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Polly;
+using RabbitMQ.Client;
 using Serilog;
 using TraineeManagementApi.Data;
 using TraineeManagementApi.Helper;
@@ -13,6 +17,47 @@ using TraineeManagementApi.Middleware;
 using TraineeManagementApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+// 1. Extract values from your custom configuration blocks
+string mySqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
+string redisConnectionString = builder.Configuration["Redis:ConnectionString"]!;
+
+var rabbitMqSection = builder.Configuration.GetSection("RabbitMq");
+string rabbitMqUser = rabbitMqSection["Username"] ?? "guest";
+string rabbitMqPass = rabbitMqSection["Password"] ?? "guest";
+string rabbitMqHost = rabbitMqSection["Host"] ?? "localhost";
+string rabbitMqPort = rabbitMqSection["Port"] ?? "5672";
+string rabbitMqVHost = rabbitMqSection["VirtualHost"] ?? "/";
+
+string rabbitMqConnectionString = $"amqp://{Uri.EscapeDataString(rabbitMqUser)}:{Uri.EscapeDataString(rabbitMqPass)}@{rabbitMqHost}:{rabbitMqPort}{rabbitMqVHost}";
+string internalServiceUrl = builder.Configuration["InternalService:BaseUrl"] ?? "http://localhost:5005";
+
+// 2. Register Health Checks cleanly to the DI Container
+builder.Services.AddHealthChecks()
+    .AddMySql(
+        mySqlConnectionString, 
+        name: "mysql"
+    )
+    .AddRedis(
+        redisConnectionString, 
+        name: "redis"
+    )
+    .AddRabbitMQ(
+        async serviceProvider => 
+        {
+            var factory = new ConnectionFactory 
+            { 
+                Uri = new Uri(rabbitMqConnectionString),
+                AutomaticRecoveryEnabled = true 
+            };
+            var response = await factory.CreateConnectionAsync();
+            return response;
+        }, 
+        name: "rabbitmq"
+    )
+    .AddUrlGroup(new Uri($"{internalServiceUrl.TrimEnd('/')}/api/health/live"), name: "internal-service");
+
+
+
 
 // --- Controller & JSON Setup ---
 builder.Services.AddControllers(options =>
@@ -81,7 +126,7 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ISubmissionFileService, SubmissionFileService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddSingleton<ICacheService, RedisCacheService>();
-builder.Services.AddScoped<ISubmissionPublisher, RabbitMqSubmissionPublisher>(); 
+builder.Services.AddScoped<ISubmissionPublisher, RabbitMqSubmissionPublisher>();
 builder.Services.AddScoped<IProcessingJobService, ProcessingJobService>();
 
 // --- Authentication Setup ---
@@ -110,7 +155,7 @@ builder.Services.AddTransient<CorrelationIdManualPropagationHandler>();
 // --- Resilient HTTP Client Setup ---
 builder.Services.AddHttpClient<ITrainingDirectoryClient, TrainingDirectoryClient>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:5138"); 
+    client.BaseAddress = new Uri("http://localhost:5138");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 })
 .AddHttpMessageHandler<CorrelationIdManualPropagationHandler>() // Force manual forwarder
@@ -123,7 +168,7 @@ builder.Services.AddHttpClient<ITrainingDirectoryClient, TrainingDirectoryClient
     options.Retry.UseJitter = true;
     options.Retry.Delay = TimeSpan.FromSeconds(1);
     options.CircuitBreaker.FailureRatio = 0.5;
-    options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(10); 
+    options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(10);
     options.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(30);
 });
 
@@ -148,7 +193,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseSerilogRequestLogging(); 
+app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
 app.UseRouting();
 app.UseCors(ReactCorsPolicy);
