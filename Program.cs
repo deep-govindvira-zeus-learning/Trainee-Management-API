@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using Polly;
 using RabbitMQ.Client;
 using Serilog;
+using StackExchange.Redis;
 using TraineeManagementApi.Data;
 using TraineeManagementApi.Helper;
 using TraineeManagementApi.Middleware;
@@ -30,6 +31,9 @@ string rabbitMqVHost = rabbitMqSection["VirtualHost"] ?? "/";
 
 string rabbitMqConnectionString = $"amqp://{Uri.EscapeDataString(rabbitMqUser)}:{Uri.EscapeDataString(rabbitMqPass)}@{rabbitMqHost}:{rabbitMqPort}{rabbitMqVHost}";
 string internalServiceUrl = builder.Configuration["InternalService:BaseUrl"] ?? "http://localhost:5005";
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp => 
+    ConnectionMultiplexer.Connect(redisConnectionString));
 
 // 2. Register Health Checks cleanly to the DI Container
 builder.Services.AddHealthChecks()

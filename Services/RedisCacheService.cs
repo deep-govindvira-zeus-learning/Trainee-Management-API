@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Caching.Distributed;
+using StackExchange.Redis;
 using System.Text.Json;
 using TraineeManagementApi.Services;
 
@@ -6,11 +7,17 @@ public class RedisCacheService : ICacheService
 {
     private readonly IDistributedCache _cache;
     private readonly ILogger<RedisCacheService> _logger;
+    private readonly IConnectionMultiplexer _redis;
+    private readonly IDatabase _db;
 
-    public RedisCacheService(IDistributedCache cache, ILogger<RedisCacheService> logger)
+
+    public RedisCacheService(IConnectionMultiplexer redis, IDistributedCache cache, ILogger<RedisCacheService> logger)
     {
         _cache = cache;
         _logger = logger;
+            _redis = redis;
+        _db = _redis.GetDatabase();
+
     }
 
     public async Task<T?> GetAsync<T>(string key)
@@ -18,7 +25,8 @@ public class RedisCacheService : ICacheService
         try
         {
             var cachedData = await _cache.GetStringAsync(key);
-            if (string.IsNullOrEmpty(cachedData)) {
+            if (string.IsNullOrEmpty(cachedData))
+            {
                 _logger.LogInformation("Cache MISS for key: {Key}", key);
                 return default;
             }
@@ -65,4 +73,32 @@ public class RedisCacheService : ICacheService
             _logger.LogError(ex, "Redis connection failed during REMOVE for key: {Key}", key);
         }
     }
+
+    public async Task RemoveByPatternAsync(string pattern)
+    {
+        var endpoints = _redis.GetEndPoints();
+        var keysToDelete = new List<RedisKey>();
+
+        // Since the prefix comes from your library's internals, 
+        // we use a leading wildcard to catch "TrainingPlatform_trainees:list:*"
+        string wildcardPattern = $"{pattern}";
+
+        foreach (var endpoint in endpoints)
+        {
+            var server = _redis.GetServer(endpoint);
+
+            // Server-side non-blocking SCAN operation 
+            await foreach (var key in server.KeysAsync(pattern: wildcardPattern))
+            {
+                keysToDelete.Add(key);
+            }
+        }
+
+        // Low-level batch execution completely bypasses wrapper prefixes
+        if (keysToDelete.Count > 0)
+        {
+            await _db.KeyDeleteAsync(keysToDelete.ToArray());
+        }
+    }
+
 }

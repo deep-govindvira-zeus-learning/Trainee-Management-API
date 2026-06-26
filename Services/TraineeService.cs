@@ -33,11 +33,8 @@ public class TraineeService : ITraineeService
         string normSearch = (search ?? string.Empty).Trim().ToLowerInvariant();
         string normStatus = (status ?? string.Empty).Trim().ToLowerInvariant();
 
-        // Fetch the current global list version from Redis (Defaults to "1" if missing)
-        string currentVersion = await _cacheService.GetAsync<string>("trainees:list:version") ?? "1";
-
         // Include the version string directly in your cache key structure
-        string cacheKey = $"trainees:list:v={currentVersion}:s={normSearch}:st={normStatus}:p={validPageNumber}:sz={validPageSize}";
+        string cacheKey = $"trainees:list:s={normSearch}:st={normStatus}:p={validPageNumber}:sz={validPageSize}";
 
         var cachedData = await _cacheService.GetAsync<PagedResponse<TraineeResponse>>(cacheKey);
         if (cachedData != null)
@@ -97,7 +94,7 @@ public class TraineeService : ITraineeService
         if (string.IsNullOrWhiteSpace(id))
         {
             _logger.LogWarning("GetByIdAsync called with an empty or null ID.");
-            throw new ArgumentException("Trainee ID cannot be null or empty.", nameof(id));
+            throw new Exception($"Trainee ID cannot be null or empty.");
         }
 
         string cacheKey = $"trainee:{id}";
@@ -217,13 +214,6 @@ public class TraineeService : ITraineeService
 
     private async Task InvalidateListCacheAsync()
     {
-        // Get the current version string
-        string currentVersionStr = await _cacheService.GetAsync<string>("trainees:list:version") ?? "1";
-        int.TryParse(currentVersionStr, out int currentVersion);
-
-        // Increment it. The next "GetAllAsync" will instantly look for a brand new key string!
-        string nextVersion = (currentVersion + 1).ToString();
-        await _cacheService.SetAsync("trainees:list:version", nextVersion, TimeSpan.FromDays(1));
+        await _cacheService.RemoveByPatternAsync("TrainingPlatform_trainees:list:*");
     }
-
 }
