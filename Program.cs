@@ -117,6 +117,12 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
+// var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// var serverVersion = new MySqlServerVersion(new Version(8, 0, 0)); 
+
+// builder.Services.AddDbContext<AppDbContext>(options =>
+//     options.UseMySql(connectionString, serverVersion)); //  Safe, fast, and no network calls at startup
+
 
 // --- Core Application Dependencies ---
 builder.Services.AddHttpContextAccessor(); // REQUIRED for header extraction
@@ -159,7 +165,10 @@ builder.Services.AddTransient<CorrelationIdManualPropagationHandler>();
 // --- Resilient HTTP Client Setup ---
 builder.Services.AddHttpClient<ITrainingDirectoryClient, TrainingDirectoryClient>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:5138");
+    string baseUrl = builder.Configuration["InternalService:BaseUrl"] 
+                     ?? throw new InvalidOperationException("InternalService:BaseUrl is missing from configuration.");
+
+    client.BaseAddress = new Uri(baseUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 })
 .AddHttpMessageHandler<CorrelationIdManualPropagationHandler>() // Force manual forwarder
@@ -201,7 +210,12 @@ app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
 app.UseRouting();
 app.UseCors(ReactCorsPolicy);
-app.UseHttpsRedirection();
+
+// Wrap this block to disable HTTPS redirection inside local containers
+if (!app.Environment.IsDevelopment())
+{
+    // app.UseHttpsRedirection();
+}
 app.UseAuthorization();
 app.MapControllers();
 
