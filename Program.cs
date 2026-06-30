@@ -17,7 +17,14 @@ using TraineeManagementApi.Helper;
 using TraineeManagementApi.Middleware;
 using TraineeManagementApi.Services;
 
+DotNetEnv.Env.Load(); // Loads the .env file into the system
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Tell .NET to look at the system environment variables
+builder.Configuration.AddEnvironmentVariables(); 
+
+
 // 1. Extract values from your custom configuration blocks
 string mySqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
 string redisConnectionString = builder.Configuration["Redis:ConnectionString"]!;
