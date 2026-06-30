@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<ProcessingJob> ProcessingJobs { get; set; }
 
     public DbSet<UserRoleLookup> UserRoles { get; set; } 
+    public DbSet<JobStatusLookup> JobStatuses { get; set; } 
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -39,6 +40,19 @@ public class AppDbContext : DbContext
                 new UserRoleLookup { Id = UserRole.Trainee, Name = nameof(UserRole.Trainee) }
             );
         });
+
+        modelBuilder.Entity<JobStatusLookup>(entity =>
+        {
+            entity.Property(e => e.Id).HasConversion<int>();
+            
+            entity.HasData(
+                new JobStatusLookup { Id = JobStatus.Queued, Name = nameof(JobStatus.Queued) },
+                new JobStatusLookup { Id = JobStatus.Processing, Name = nameof(JobStatus.Processing) },
+                new JobStatusLookup { Id = JobStatus.Completed, Name = nameof(JobStatus.Completed) },
+                new JobStatusLookup { Id = JobStatus.Failed, Name = nameof(JobStatus.Failed) }
+            );
+        });
+
 
         modelBuilder.Entity<User>(entity =>
         {
