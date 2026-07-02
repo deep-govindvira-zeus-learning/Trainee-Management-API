@@ -26,7 +26,6 @@ public class TrainingDirectoryClient : ITrainingDirectoryClient
 
     public async Task<TraineeProfileResponse?> GetProfileAsync(string traineeId, CancellationToken cancellationToken)
     {
-        // Propagate Correlation ID from incoming request context
         var correlationId = _httpContextAccessor.HttpContext?.Request.Headers["X-Correlation-ID"].ToString() 
                             ?? Guid.NewGuid().ToString();
         
@@ -39,10 +38,9 @@ public class TrainingDirectoryClient : ITrainingDirectoryClient
 
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
-                return null; // Graceful handoff for known 404 resource states
+                return null;
             }
 
-            // Throw exception for 5xx/408 status codes so resilience handlers can catch them
             response.EnsureSuccessStatusCode(); 
 
             return await response.Content.ReadFromJsonAsync<TraineeProfileResponse>(cancellationToken: cancellationToken);
@@ -50,7 +48,7 @@ public class TrainingDirectoryClient : ITrainingDirectoryClient
         catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Unauthorized)
         {
             _logger.LogError(ex, "Non-transient error occurred. Skipping retries.");
-            throw; // Let application-level middleware handle bad requests or auth failures
+            throw;
         }
         catch (Exception ex)
         {
@@ -59,7 +57,6 @@ public class TrainingDirectoryClient : ITrainingDirectoryClient
         }
     }
 
-    // Task 3.19: Fallback Behaviour
     private TraineeProfileResponse GetFallbackProfile(string traineeId)
     {
         return new TraineeProfileResponse(traineeId, "Unknown Trainee", "Degraded/Cached Mode");
