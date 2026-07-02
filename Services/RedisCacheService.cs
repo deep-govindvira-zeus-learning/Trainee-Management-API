@@ -79,22 +79,18 @@ public class RedisCacheService : ICacheService
         var endpoints = _redis.GetEndPoints();
         var keysToDelete = new List<RedisKey>();
 
-        // Since the prefix comes from your library's internals, 
-        // we use a leading wildcard to catch "TrainingPlatform_trainees:list:*"
         string wildcardPattern = $"{pattern}";
 
         foreach (var endpoint in endpoints)
         {
             var server = _redis.GetServer(endpoint);
 
-            // Server-side non-blocking SCAN operation 
             await foreach (var key in server.KeysAsync(pattern: wildcardPattern))
             {
                 keysToDelete.Add(key);
             }
         }
 
-        // Low-level batch execution completely bypasses wrapper prefixes
         if (keysToDelete.Count > 0)
         {
             await _db.KeyDeleteAsync(keysToDelete.ToArray());
