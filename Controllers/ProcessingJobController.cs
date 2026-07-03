@@ -23,4 +23,11 @@ public class ProcessingJobsController : ControllerBase
         var response = await _jobService.GetByIdAsync(id);
         return Ok(response);
     }
+
+    [HttpPost("{id:guid}/retry")]
+    public async Task<ActionResult<ProcessingJobResponse>> RetryAsync(Guid id)
+    {
+        var response = await _jobService.RetryById(id);
+        return Ok(response);
+    }
 }
