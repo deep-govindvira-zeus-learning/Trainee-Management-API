@@ -165,8 +165,29 @@ public class SubmissionService : ISubmissionService
             var submissionFileResponse = SubmissionFileConverter.ToSubmissionFileResponse(submissionFile);
             submissionFileResponseList.Add(submissionFileResponse);
 
-            bool isQueued = await _submissionPublisher.Publish(SubmissionProcessingRequestedConverter.ToSubmissionProcessingRequested(submissionFileResponse));
-            
+            try
+            {
+                bool isQueued = await _submissionPublisher.Publish(
+                    SubmissionProcessingRequestedConverter.ToSubmissionProcessingRequested(submissionFileResponse)
+                );
+
+                if (!isQueued)
+                {
+                    _logger.LogWarning($"Publish failed for file {submissionFileResponse.StorageName}. Cleaning up physical file.");
+                    await _fileStorageService.DeleteAsync(submissionFileResponse.StorageName);
+
+                    throw new Exception($"Publish failed for file {submissionFileResponse.StorageName}.");
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, $"Exception while publishing {submissionFileResponse.StorageName}. Cleaning up physical file.");
+
+                await _fileStorageService.DeleteAsync(submissionFileResponse.StorageName);
+
+                throw;
+            }
+
         }
 
         await _context.SaveChangesAsync(); // State committed to source of truth
