@@ -24,12 +24,8 @@ public class RabbitMqSubmissionPublisher : ISubmissionPublisher, IAsyncDisposabl
         _logger = logger;
         _configuration = configuration;
         _queueName = configuration["RabbitMq:QueueName"] ?? "submission-processing";
-        // REMOVED: Do not call async methods in constructor. Let it initialize lazily on demand.
     }
 
-    /// <summary>
-    /// Thread-safe, asynchronous connection initializer. Guaranteed to run completely before any message is published.
-    /// </summary>
     private async Task<IConnection> GetConnectionAsync()
     {
         if (_connection != null && _connection.IsOpen)
