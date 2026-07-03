@@ -72,10 +72,8 @@ public class RabbitMqSubmissionPublisher : ISubmissionPublisher, IAsyncDisposabl
     {
         try
         {
-            // 1. Ensure connection is up and fully awaited
             var connection = await GetConnectionAsync();
 
-            // 2. Open a transient channel scoped entirely to this specific message delivery
             await using var channel = await connection.CreateChannelAsync();
 
             var queueArgs = new Dictionary<string, object?>
@@ -99,13 +97,12 @@ public class RabbitMqSubmissionPublisher : ISubmissionPublisher, IAsyncDisposabl
 
             var properties = new BasicProperties
             {
-                Persistent = true, // Survives RabbitMQ server crashes/restarts
+                Persistent = true,
                 ContentType = "application/json",
                 MessageId = message.MessageId.ToString(),
                 CorrelationId = message.CorrelationId.ToString()
             };
 
-            // Publish through your central exchange routing key
             await channel.BasicPublishAsync(
                 exchange: "submission.main.exchange",
                 routingKey: "submission.process.key",
