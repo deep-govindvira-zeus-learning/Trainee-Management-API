@@ -25,6 +25,7 @@ public class ProcessingJobsController : ControllerBase
     }
 
     [HttpPost("{id:guid}/retry")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ProcessingJobResponse>> RetryAsync(Guid id)
     {
         var response = await _jobService.RetryById(id);
