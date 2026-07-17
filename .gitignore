@@ -5,6 +5,7 @@ Logs/
 Uploads/
 
 appsettings.json
+docker-compose-production.yaml
 
 [Dd]ebug/
 [Dd]ebugPublic/
