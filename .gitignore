@@ -4,6 +4,7 @@ Migrations/
 Logs/
 Uploads/
 
+appsettings.json
 
 [Dd]ebug/
 [Dd]ebugPublic/
