@@ -10,13 +10,18 @@ public class RedisCacheService : ICacheService
     private readonly IConnectionMultiplexer _redis;
     private readonly IDatabase _db;
 
+    // Same config key + default as the InstanceName passed to AddStackExchangeRedisCache in
+    // Program.cs, so raw KEYS-pattern scans stay in sync with the prefix IDistributedCache
+    // applies under the hood, instead of duplicating "TrainingPlatform_" as a magic string.
+    private readonly string _instanceName;
 
-    public RedisCacheService(IConnectionMultiplexer redis, IDistributedCache cache, ILogger<RedisCacheService> logger)
+    public RedisCacheService(IConnectionMultiplexer redis, IDistributedCache cache, ILogger<RedisCacheService> logger, IConfiguration configuration)
     {
         _cache = cache;
         _logger = logger;
             _redis = redis;
         _db = _redis.GetDatabase();
+        _instanceName = configuration["Redis:InstanceName"] ?? "TrainingPlatform_";
 
     }
 
@@ -79,7 +84,9 @@ public class RedisCacheService : ICacheService
         var endpoints = _redis.GetEndPoints();
         var keysToDelete = new List<RedisKey>();
 
-        string wildcardPattern = $"{pattern}";
+        // IDistributedCache stores keys under the configured InstanceName prefix, but this
+        // method talks to Redis directly, so the prefix has to be applied here explicitly.
+        string wildcardPattern = $"{_instanceName}{pattern}";
 
         foreach (var endpoint in endpoints)
         {

@@ -218,7 +218,7 @@ public class SubmissionService : ISubmissionService
         {
             if (file == null || file.Length == 0)
             {
-                continue;
+                throw new Exception($"File '{file?.FileName ?? "unknown"}' is empty and cannot be uploaded.");
             }
 
             if (file.Length > _maxFileSize)

@@ -16,10 +16,27 @@ public class SubmissionFileService : ISubmissionFileService
         _logger = logger;
         _fileStorageService = fileStorageService;
     }
-    public async Task<(Stream Stream, string ContentType, string FileName)>  DownloadFileAsync(string id)
+    // Prevents IDOR: any authenticated Trainee could previously download/delete any other
+    // trainee's files just by guessing the SubmissionFile id, since only [Authorize] (any
+    // authenticated user) was enforced and no ownership check existed. Admins/Mentors need
+    // broad access to review or manage submissions, so they bypass the ownership check.
+    private static void EnsureOwnership(TraineeManagementApi.Models.SubmissionFile submissionFile, string requestedBy, bool isPrivileged)
+    {
+        if (isPrivileged) return;
+
+        if (string.IsNullOrEmpty(requestedBy) ||
+            !string.Equals(submissionFile.UploadedBy, requestedBy, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new UnauthorizedAccessException("You are not authorized to access this file.");
+        }
+    }
+
+    public async Task<(Stream Stream, string ContentType, string FileName)>  DownloadFileAsync(string id, string requestedBy, bool isPrivileged)
     {
         var submissionFile = await _context.SubmissionFiles.FindAsync(id);
         if (submissionFile == null) throw new Exception($"SubmissionFile with id: {id} not found in db.");
+
+        EnsureOwnership(submissionFile, requestedBy, isPrivileged);
 
         if (!await _fileStorageService.ExistsAsync(submissionFile.StorageName))
         {
@@ -31,10 +48,12 @@ public class SubmissionFileService : ISubmissionFileService
         return (stream, submissionFile.ContentType, submissionFile.OriginalFileName);
     }
 
-    public async Task DeleteFileAsync(string id)
+    public async Task DeleteFileAsync(string id, string requestedBy, bool isPrivileged)
     {
         var submissionFile = await _context.SubmissionFiles.FindAsync(id);
         if (submissionFile == null) throw new Exception($"SubmissionFile with id: {id} not found in db.");
+
+        EnsureOwnership(submissionFile, requestedBy, isPrivileged);
 
         using var transaction = await _context.Database.BeginTransactionAsync();
         try

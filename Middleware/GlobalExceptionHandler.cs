@@ -26,25 +26,25 @@ public class GlobalExceptionHandler : IExceptionHandler
             KeyNotFoundException => (StatusCodes.Status404NotFound, "Resource Not Found"),
             ArgumentException => (StatusCodes.Status400BadRequest, "Invalid Input Data"),
             InvalidOperationException => (StatusCodes.Status400BadRequest, "Invalid Operation"),
+            UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "Forbidden"),
             _ => (StatusCodes.Status500InternalServerError, "Internal Server Error")
         };
 
-        // var problemDetails = new ProblemDetails
-        // {
-        //     Status = statusCode,
-        //     Title = title,
-        //     Detail = exception.Message,
-        //     Instance = httpContext.Request.Path,
-        // };
+        // Only the exceptions above are ones we deliberately throw with safe, user-facing
+        // messages (e.g. "Trainee with ID '...' was not found."). Anything else falls through
+        // to a generic 500 and must NOT expose exception.Message to the client, since that can
+        // include internal details from EF/DbUpdateException, Redis, connection strings, etc.
+        // The full exception is still logged above for server-side debugging.
+        string clientMessage = statusCode == StatusCodes.Status500InternalServerError
+            ? "An unexpected error occurred. Please try again later."
+            : exception.Message;
 
         httpContext.Response.StatusCode = statusCode;
-
-        // await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
 
         await httpContext.Response.WriteAsJsonAsync(new {
             Status = statusCode,
             Title = title,
-            Message = exception.Message,
+            Message = clientMessage,
             Instance = httpContext.Request.Path,
         }, cancellationToken);
 

@@ -54,13 +54,4 @@ public static class SubmissionFileConverter
         };
     }
 
-    // public static List<SubmissionResponse> ToSubmissionResponseList(List<Submission> submissions)
-    // {
-    //     return submissions.Select(ToSubmissionResponse).ToList();
-    // }
-
-    // public static List<SubmissionResponse> ToSubmissionResponseList(List<Submission> submissions)
-    // {
-    //     return submissions.Select(ToSubmissionResponse).ToList();
-    // }
 }

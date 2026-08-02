@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using TraineeManagementApi.Data;
 using TraineeManagementApi.Models;
 
@@ -5,16 +6,23 @@ namespace TraineeManagementApi.Data;
 
 public static class DbInitializer
 {
-    public static void Seed(AppDbContext context)
+    // Seed credentials come from configuration/secrets (e.g. user-secrets, environment
+    // variables, or a "SeedData" section in appsettings — which is gitignored) rather than
+    // being hardcoded in source. The literals below are only a local-dev fallback so a fresh
+    // checkout still boots without extra setup, and are never appropriate for a shared/staging
+    // database.
+    public static void Seed(AppDbContext context, IConfiguration configuration)
     {
         context.Database.EnsureCreated();
+
+        var seedSection = configuration.GetSection("SeedData");
 
         var admin = new User
         {
             Id = Guid.NewGuid().ToString(),
             Username = "admin",
             Email = "admin@test.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin@123"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(seedSection["AdminPassword"] ?? "admin@123"),
             Role = UserRole.Admin,
         };
 
@@ -23,7 +31,7 @@ public static class DbInitializer
             Id = Guid.NewGuid().ToString(),
             Username = "trainee1",
             Email = "trainee1@test.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("trainee1@123"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(seedSection["TraineePassword"] ?? "trainee1@123"),
             Role = UserRole.Trainee,
         };
 
@@ -32,7 +40,7 @@ public static class DbInitializer
             Id = Guid.NewGuid().ToString(),
             Username = "mentor1",
             Email = "mentor1@test.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("mentor1@123"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(seedSection["MentorPassword"] ?? "mentor1@123"),
             Role = UserRole.Mentor,
         };
 

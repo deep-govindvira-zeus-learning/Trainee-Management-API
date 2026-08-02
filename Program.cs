@@ -39,6 +39,10 @@ string rabbitMqVHost = rabbitMqSection["VirtualHost"] ?? "/";
 string rabbitMqConnectionString = $"amqp://{Uri.EscapeDataString(rabbitMqUser)}:{Uri.EscapeDataString(rabbitMqPass)}@{rabbitMqHost}:{rabbitMqPort}{rabbitMqVHost}";
 string internalServiceUrl = builder.Configuration["InternalService:BaseUrl"] ?? "http://localhost:5005";
 
+// Single source of truth for the Redis key prefix, reused below and inside
+// RedisCacheService (for pattern-based invalidation) so the two can never drift apart.
+string redisInstanceName = builder.Configuration["Redis:InstanceName"] ?? "TrainingPlatform_";
+
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp => 
     ConnectionMultiplexer.Connect(redisConnectionString));
 
@@ -84,7 +88,7 @@ builder.Services.AddControllers(options =>
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration.GetValue<string>("Redis:ConnectionString");
-    options.InstanceName = "TrainingPlatform_";
+    options.InstanceName = redisInstanceName;
 });
 
 builder.Services.AddSerilog((services, lc) => lc.ReadFrom.Configuration(builder.Configuration));
@@ -113,22 +117,11 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddOpenApi();
 builder.Services.AddValidation();
 
-// --- InMemory DB ---
-// builder.Services.AddDbContext<AppDbContext>(options =>
-// {
-//     options.UseInMemoryDatabase("TraineeManagementDb");
-// });
-
 // --- Database Setup ---
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
-// var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-// var serverVersion = new MySqlServerVersion(new Version(8, 0, 0)); 
-
-// builder.Services.AddDbContext<AppDbContext>(options =>
-//     options.UseMySql(connectionString, serverVersion)); //  Safe, fast, and no network calls at startup
 
 
 // --- Core Application Dependencies ---
@@ -197,11 +190,14 @@ builder.Services.AddHttpClient<ITrainingDirectoryClient, TrainingDirectoryClient
 // ========================================================
 var app = builder.Build();
 
-// Seed Database Context
-using (var scope = app.Services.CreateScope())
+// Seed Database Context.
+// Guarded to non-Production environments: this creates default Admin/Trainee/Mentor accounts,
+// and should never run automatically against a shared/staging/production database.
+if (!app.Environment.IsProduction())
 {
+    using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    DbInitializer.Seed(context);
+    DbInitializer.Seed(context, app.Configuration);
 }
 
 if (app.Environment.IsDevelopment())
@@ -223,6 +219,12 @@ if (!app.Environment.IsDevelopment())
 {
     // app.UseHttpsRedirection();
 }
+
+// IMPORTANT: UseAuthentication() must run before UseAuthorization() so that the
+// JWT bearer handler populates HttpContext.User from the incoming token before
+// [Authorize] checks are evaluated. Without this, every authenticated endpoint
+// rejects valid tokens with 401.
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

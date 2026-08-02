@@ -214,6 +214,6 @@ public class TraineeService : ITraineeService
 
     private async Task InvalidateListCacheAsync()
     {
-        await _cacheService.RemoveByPatternAsync("TrainingPlatform_trainees:list:*");
+        await _cacheService.RemoveByPatternAsync("trainees:list:*");
     }
 }
